@@ -131,3 +131,25 @@ Ask the AI to adjust BPM and time signature:
 - All conversations are processed through Groq's secure API
 - No audio data is sent to external services
 - Only text messages are processed for AI responses
+
+## Configuration
+
+### Setting Up Your Groq API Key
+
+1. **Create a `.env` file** in the `packages/app/studio/` directory
+2. **Add your API key**:
+   ```
+   VITE_GROQ_API_KEY=your-actual-groq-api-key-here
+   ```
+3. **Restart the application** for changes to take effect
+
+### Example .env File
+```
+VITE_GROQ_API_KEY=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
+```
+
+### Security Notes
+- **Never commit your `.env` file** to version control
+- **Keep your API key private** and secure
+- **Use environment variables** for all sensitive configuration
+- The `.env.example` file shows the required format without exposing actual keys

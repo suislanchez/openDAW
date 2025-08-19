@@ -204,10 +204,17 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
                     addMessage('assistant', `🎵 Applied ${control.type} changes: ${paramText}`)
                 }
             } else {
-                // Regular chat response
-                const response = await groqService.sendMessage(userMessage)
-                messages.pop() // Remove typing indicator
-                addMessage('assistant', response)
+                // Check if it's an API key issue
+                if (groqService && groqService.getCurrentBpm() === 0) {
+                    // API key not configured
+                    messages.pop() // Remove typing indicator
+                    addMessage('assistant', '⚠️ Groq API key not configured. Please create a `.env` file with your `VITE_GROQ_API_KEY`. Check the README for setup instructions.')
+                } else {
+                    // Regular chat response
+                    const response = await groqService.sendMessage(userMessage)
+                    messages.pop() // Remove typing indicator
+                    addMessage('assistant', response)
+                }
             }
         } catch (error) {
             console.error('Error processing message:', error)

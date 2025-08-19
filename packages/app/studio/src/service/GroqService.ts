@@ -21,10 +21,13 @@ export interface TimelineControl {
 }
 
 export class GroqService {
-    private readonly apiKey = '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'
+    private readonly apiKey: string
     private readonly baseUrl = 'https://api.groq.com/openai/v1/chat/completions'
     
     constructor(private project: Project) {
+        // Get API key from environment variable or use a placeholder
+        this.apiKey = import.meta.env.VITE_GROQ_API_KEY || 'your-api-key-here'
+        
         // Debug: Log the project structure
         console.log('🎵 GroqService initialized with project:', this.project)
         console.log('🎵 Project keys:', Object.keys(this.project))
@@ -47,7 +50,15 @@ export class GroqService {
         }
     }
     
+
+    
     async sendMessage(message: string): Promise<string> {
+        // Check if API key is properly configured
+        if (this.apiKey === 'your-api-key-here' || !this.apiKey) {
+            console.warn('🎵 Groq API key not configured. Please set VITE_GROQ_API_KEY environment variable.')
+            return '⚠️ Groq API key not configured. Please set the VITE_GROQ_API_KEY environment variable in your .env file.'
+        }
+        
         try {
             const response = await fetch(this.baseUrl, {
                 method: 'POST',
@@ -123,6 +134,12 @@ Keep responses concise but informative.`
         const lowerMessage = message.toLowerCase()
         console.log('🎵 Processing request:', message)
         console.log('🎵 Lower message:', lowerMessage)
+        
+        // Check if API key is configured
+        if (this.apiKey === 'your-api-key-here' || !this.apiKey) {
+            console.warn('🎵 Cannot process request: Groq API key not configured')
+            return null
+        }
         
         // Check if this is a timeline control request (BPM, time signature)
         if (lowerMessage.includes('bpm') || lowerMessage.includes('tempo') || 
