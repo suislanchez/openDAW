@@ -1,0 +1,323 @@
+// AI Chat Component Styles
+.ai-chat-toggle
+  position: fixed
+  bottom: 20px
+  right: 20px
+  width: 56px
+  height: 56px
+  border-radius: 50%
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+  border: none
+  color: white
+  cursor: pointer
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15)
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)
+  z-index: 1000
+  display: flex
+  align-items: center
+  justify-content: center
+  
+  &:hover
+    transform: translateY(-2px)
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2)
+  
+  &:active
+    transform: translateY(0)
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15)
+  
+  &.ai-chat-toggle-pulse
+    animation: buttonPulse 2s ease-in-out
+
+@keyframes buttonPulse
+  0%, 100%
+    transform: scale(1)
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15)
+  25%, 75%
+    transform: scale(1.1)
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2)
+  50%
+    transform: scale(1.15)
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25)
+
+.ai-chat-panel
+  position: fixed
+  bottom: 90px
+  right: 20px
+  width: 380px
+  height: 500px
+  background: rgba(255, 255, 255, 0.95)
+  backdrop-filter: blur(20px)
+  border-radius: 16px
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12)
+  border: 1px solid rgba(255, 255, 255, 0.2)
+  display: flex
+  flex-direction: column
+  z-index: 999
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)
+  overflow: hidden
+
+@keyframes slideUp
+  from
+    transform: translateY(100%)
+    opacity: 0
+  to
+    transform: translateY(0)
+    opacity: 1
+
+.ai-chat-header
+  display: flex
+  align-items: center
+  justify-content: space-between
+  padding: 20px 20px 16px
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08)
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+  color: white
+
+.ai-chat-header-main
+  display: flex
+  flex-direction: column
+  gap: 8px
+  
+  h3
+    margin: 0
+    font-size: 18px
+    font-weight: 600
+    letter-spacing: 0.5px
+  
+  .ai-chat-bpm-display
+    font-size: 14px
+    font-weight: 500
+    opacity: 0.9
+    
+    span
+      font-weight: 600
+      color: #fbbf24
+
+.ai-chat-header-controls
+  display: flex
+  align-items: center
+  gap: 12px
+
+.ai-chat-test
+  background: rgba(255, 255, 255, 0.2)
+  border: none
+  color: white
+  padding: 6px 12px
+  border-radius: 16px
+  cursor: pointer
+  font-size: 12px
+  font-weight: 500
+  transition: background 0.2s ease
+  
+  &:hover
+    background: rgba(255, 255, 255, 0.3)
+
+.ai-chat-close
+  background: rgba(255, 255, 255, 0.2)
+  border: none
+  color: white
+  width: 28px
+  height: 28px
+  border-radius: 50%
+  cursor: pointer
+  display: flex
+  align-items: center
+  justify-content: center
+  transition: background 0.2s ease
+  
+  &:hover
+    background: rgba(255, 255, 255, 0.3)
+
+.ai-chat-messages
+  flex: 1
+  padding: 16px 20px
+  overflow-y: auto
+  display: flex
+  flex-direction: column
+  gap: 16px
+
+.ai-chat-message
+  display: flex
+  align-items: flex-start
+  gap: 12px
+  
+  &.ai-chat-message-ai
+    .ai-chat-avatar
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+      color: white
+      font-size: 12px
+      font-weight: 600
+      width: 32px
+      height: 32px
+      border-radius: 50%
+      display: flex
+      align-items: center
+      justify-content: center
+      flex-shrink: 0
+  
+  &.ai-chat-message-user
+    flex-direction: row-reverse
+    
+    .ai-chat-avatar
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)
+      color: white
+      font-size: 12px
+      font-weight: 600
+      width: 32px
+      height: 32px
+      border-radius: 50%
+      display: flex
+      align-items: center
+      justify-content: center
+      flex-shrink: 0
+
+.ai-chat-content
+  flex: 1
+  
+  p
+    margin: 0
+    line-height: 1.5
+    color: #333
+    background: rgba(0, 0, 0, 0.04)
+    padding: 12px 16px
+    border-radius: 18px
+    max-width: 280px
+    word-wrap: break-word
+
+.ai-chat-message-user .ai-chat-content p
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)
+  color: white
+  margin-left: auto
+
+.ai-chat-input
+  display: flex
+  align-items: center
+  gap: 12px
+  padding: 16px 20px
+  border-top: 1px solid rgba(0, 0, 0, 0.08)
+  background: rgba(255, 255, 255, 0.8)
+
+.ai-chat-text-input
+  flex: 1
+  border: 1px solid rgba(0, 0, 0, 0.1)
+  border-radius: 24px
+  padding: 12px 16px
+  font-size: 14px
+  outline: none
+  transition: border-color 0.2s ease
+  
+  &:focus
+    border-color: #667eea
+  
+  &::placeholder
+    color: #999
+  
+  &:disabled
+    opacity: 0.6
+    cursor: not-allowed
+    background: rgba(0, 0, 0, 0.05)
+
+.ai-chat-send
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+  border: none
+  color: white
+  width: 40px
+  height: 40px
+  border-radius: 50%
+  cursor: pointer
+  display: flex
+  align-items: center
+  justify-content: center
+  transition: transform 0.2s ease
+  
+  &:hover:not(:disabled)
+    transform: scale(1.05)
+  
+  &:active:not(:disabled)
+    transform: scale(0.95)
+  
+  &:disabled
+    opacity: 0.6
+    cursor: not-allowed
+    background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)
+
+// Responsive adjustments
+@media (max-width: 480px)
+  .ai-chat-panel
+    width: calc(100vw - 40px)
+    right: 20px
+    left: 20px
+  
+  .ai-chat-content p
+    max-width: 100%
+
+// Typing indicator
+.ai-chat-message-ai .ai-chat-content p:contains("...")
+  font-style: italic
+  opacity: 0.7
+
+// Effect control messages
+.ai-chat-message-ai .ai-chat-content p:contains("🎛️ Applied")
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%) !important
+  color: white !important
+  font-weight: 600
+  animation: pulse 2s ease-in-out
+
+.ai-chat-message-ai .ai-chat-content p:contains("🎵 Applied")
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important
+  color: white !important
+  font-weight: 600
+  animation: pulse 2s ease-in-out
+
+@keyframes pulse
+  0%, 100%
+    transform: scale(1)
+  50%
+    transform: scale(1.02)
+
+// Scrollbar styling
+.ai-chat-messages::-webkit-scrollbar
+  width: 6px
+
+.ai-chat-messages::-webkit-scrollbar-track
+  background: rgba(0, 0, 0, 0.05)
+  border-radius: 3px
+
+.ai-chat-messages::-webkit-scrollbar-thumb
+  background: rgba(0, 0, 0, 0.2)
+  border-radius: 3px
+  
+  &:hover
+    background: rgba(0, 0, 0, 0.3)
+
+// Change notification styling
+.ai-chat-notification
+  position: fixed
+  top: 100px
+  right: 30px
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%)
+  color: white
+  padding: 16px 20px
+  border-radius: 12px
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15)
+  z-index: 1001
+  transform: translateX(400px)
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)
+  max-width: 350px
+  
+  &.show
+    transform: translateX(0)
+  
+  .ai-chat-notification-content
+    display: flex
+    align-items: center
+    gap: 12px
+  
+  .ai-chat-notification-icon
+    font-size: 20px
+    flex-shrink: 0
+  
+  .ai-chat-notification-text
+    font-size: 14px
+    font-weight: 500
+    line-height: 1.4

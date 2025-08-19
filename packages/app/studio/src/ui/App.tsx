@@ -14,6 +14,7 @@ import {AudioInputDevicesPage} from "./pages/AudioInputDevicesPage"
 import {ErrorsPage} from "@/ui/pages/ErrorsPage.tsx"
 import {ImprintPage} from "@/ui/pages/ImprintPage.tsx"
 import {GraphPage} from "@/ui/pages/GraphPage"
+import {AiChat} from "@/ui/components/AiChat.tsx"
 
 export const App = (service: StudioService) => {
     const terminator = new Terminator()
@@ -43,6 +44,7 @@ export const App = (service: StudioService) => {
                 ]}
             />
             <Footer lifecycle={terminator} service={service}/>
+            <AiChat lifecycle={terminator} service={service}/>
         </Frag>
     )
 }
