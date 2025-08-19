@@ -1,6 +1,9 @@
-import {Project} from "@opendaw/studio-core"
-import {DelayDeviceBox, ReverbDeviceBox} from "@opendaw/studio-boxes"
+import {Project, InstrumentFactories, ColorCodes} from "@opendaw/studio-core"
+import {DelayDeviceBox, ReverbDeviceBox, AudioFileBox, AudioRegionBox} from "@opendaw/studio-boxes"
 import {BoxAdapter} from "@opendaw/studio-adapters"
+import {UUID} from "@opendaw/lib-std"
+import {PPQN} from "@opendaw/lib-dsp"
+import {SampleApi} from "./SampleApi"
 
 export interface ChatMessage {
     role: 'user' | 'assistant'
@@ -17,6 +20,12 @@ export interface AudioEffectControl {
 export interface TimelineControl {
     type: 'bpm' | 'signature'
     parameters: Record<string, number>
+    message: string
+}
+
+export interface SampleControl {
+    type: 'add_sample'
+    parameters: Record<string, any>
     message: string
 }
 
@@ -71,7 +80,7 @@ export class GroqService {
                     messages: [
                         {
                             role: 'system',
-                            content: `You are an AI music production assistant for openDAW. You can help users with music production questions and control audio effects like reverb and delay, as well as timeline settings like BPM and time signature.
+                            content: `You are an AI music production assistant for openDAW. You can help users with music production questions and control audio effects like reverb and delay, as well as timeline settings like BPM and time signature, and add samples to their projects.
 
 When users ask to change reverb or delay settings, you should:
 1. Understand what they want to change
@@ -84,6 +93,12 @@ When users ask to change BPM or time signature, you should:
 2. Provide specific BPM values or time signature ratios
 3. Explain the musical impact of the change
 4. Be helpful and educational
+
+When users ask to add samples, you should:
+1. Understand what kind of sample they want
+2. Explain that you'll add a random sample to their project
+3. Be encouraging and helpful
+4. Suggest they can ask for specific types of samples
 
 Available reverb parameters:
 - decay: 0.0 to 1.0 (reverb tail length)
@@ -130,7 +145,7 @@ Keep responses concise but informative.`
         }
     }
     
-    async processRequest(message: string): Promise<AudioEffectControl | TimelineControl | null> {
+    async processRequest(message: string): Promise<AudioEffectControl | TimelineControl | SampleControl | null> {
         const lowerMessage = message.toLowerCase()
         console.log('🎵 Processing request:', message)
         console.log('🎵 Lower message:', lowerMessage)
@@ -139,6 +154,29 @@ Keep responses concise but informative.`
         if (this.apiKey === 'your-api-key-here' || !this.apiKey) {
             console.warn('🎵 Cannot process request: Groq API key not configured')
             return null
+        }
+        
+        // Check if this is a sample control request
+        if (lowerMessage.includes('add') && (lowerMessage.includes('sample') || lowerMessage.includes('sound') || lowerMessage.includes('audio'))) {
+            console.log('🎵 Detected sample control request')
+            try {
+                const aiResponse = await this.sendMessage(message)
+                console.log('🎵 AI response:', aiResponse)
+                
+                // Create sample control
+                const sampleControl = this.createSampleControl(aiResponse, lowerMessage)
+                console.log('🎵 Created sample control:', sampleControl)
+                
+                if (sampleControl) {
+                    // Apply the sample changes
+                    await this.applySampleControl(sampleControl)
+                }
+                
+                return sampleControl
+            } catch (error) {
+                console.error('🎵 Error processing sample request:', error)
+                return null
+            }
         }
         
         // Check if this is a timeline control request (BPM, time signature)
@@ -360,6 +398,94 @@ Keep responses concise but informative.`
         if (denominatorMatch) params.denominator = parseInt(denominatorMatch[1])
         
         return params
+    }
+    
+    private createSampleControl(aiResponse: string, userMessage: string): SampleControl | null {
+        console.log('🎵 Creating sample control from AI response:', aiResponse)
+        
+        // For now, we'll add a random sample when someone asks to add a sample
+        return {
+            type: 'add_sample',
+            parameters: {
+                random: true,
+                message: 'Adding a random sample to your project'
+            },
+            message: aiResponse
+        }
+    }
+    
+    private async applySampleControl(sampleControl: SampleControl): Promise<void> {
+        try {
+            console.log('🎵 Applying sample control:', sampleControl)
+            
+            if (sampleControl.type === 'add_sample') {
+                await this.addRandomSample()
+            }
+            
+        } catch (error) {
+            console.error('🎵 Error applying sample control:', error)
+        }
+    }
+    
+    private async addRandomSample(): Promise<void> {
+        try {
+            console.log('🎵 Adding random sample to project...')
+            
+            // Get available samples from the API
+            const samples = await SampleApi.all()
+            console.log('🎵 Available samples:', samples.length)
+            
+            if (samples.length === 0) {
+                console.warn('🎵 No samples available')
+                return
+            }
+            
+            // Pick a random sample
+            const randomSample = samples[Math.floor(Math.random() * samples.length)]
+            console.log('🎵 Selected random sample:', randomSample.name)
+            
+            // Add the sample to the project
+            await this.addSampleToProject(randomSample)
+            
+        } catch (error) {
+            console.error('🎵 Error adding random sample:', error)
+        }
+    }
+    
+    private async addSampleToProject(sample: any): Promise<void> {
+        try {
+            const {editing, boxGraph, rootBoxAdapter} = this.project
+            
+            editing.modify(() => {
+                // Create an audio file box for the sample
+                const audioFileBox = AudioFileBox.create(boxGraph, UUID.parse(sample.uuid), box => {
+                    box.fileName.setValue(sample.name)
+                    box.startInSeconds.setValue(0)
+                    box.endInSeconds.setValue(sample.duration || 10) // Default to 10 seconds if no duration
+                })
+                
+                // Create a track for the sample
+                const startIndex = rootBoxAdapter.audioUnits.adapters().length
+                const {trackBox} = this.project.api.createInstrument(InstrumentFactories.Tape, {index: startIndex})
+                
+                // Create an audio region box
+                const duration = Math.round(PPQN.secondsToPulses(sample.duration || 10, this.getCurrentBpm()))
+                AudioRegionBox.create(boxGraph, UUID.generate(), box => {
+                    box.position.setValue(0)
+                    box.duration.setValue(duration)
+                    box.loopDuration.setValue(duration)
+                    box.regions.refer(trackBox.regions)
+                    box.hue.setValue(ColorCodes.forTrackType(trackBox.type.getValue()))
+                    box.label.setValue(sample.name)
+                    box.file.refer(audioFileBox)
+                })
+                
+                console.log(`🎵 Successfully added sample "${sample.name}" to project`)
+            }, false)
+            
+        } catch (error) {
+            console.error('🎵 Error adding sample to project:', error)
+        }
     }
     
     private async applyEffectControl(effectControl: AudioEffectControl): Promise<void> {

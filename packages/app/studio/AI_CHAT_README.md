@@ -42,6 +42,16 @@ The AI can automatically control these timeline settings:
 - **Denominator**: 1 to 32 (note value)
 - Supports common signatures like 4/4, 3/4, 6/8, etc.
 
+### 🎵 Sample Management
+The AI can add samples to your project:
+
+#### Sample Addition
+- **"Add a sample"** → Adds a random sample to your project
+- **"Add some audio"** → Adds a random audio sample
+- **"Add a sound"** → Adds a random sound sample
+- Creates new audio tracks automatically
+- Samples appear in the timeline immediately
+
 ## How to Use
 
 ### 1. Access the Chat
@@ -99,6 +109,12 @@ Ask the AI to adjust BPM and time signature:
 **AI**: "I'll change the time signature to 3/4, which will give your track a classic waltz rhythm with three beats per measure."
 
 **Result**: `🎵 Applied signature changes: nominator: 3, denominator: 4`
+
+### Sample Addition
+**You**: "Add a sample to my project"
+**AI**: "I'll add a random sample to your project! This will create a new audio track that you can use in your music."
+
+**Result**: `🎵 Added sample to your project! Check the timeline for the new audio track.`
 
 ## Technical Details
 
