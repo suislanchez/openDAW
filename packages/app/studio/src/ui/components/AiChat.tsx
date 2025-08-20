@@ -16,6 +16,7 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
     const terminator = lifecycle.own(new Terminator())
     let isOpen = false
     let groqService: GroqService | null = null
+    let midiConversionService: any = null
     let messages: ChatMessage[] = [
         {
             role: 'assistant',
@@ -115,6 +116,38 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
         const previewElement = document.getElementById('template-preview-text')
         if (previewElement) {
             previewElement.textContent = `${selectedGenre} • ${selectedMood} • ${selectedStyle}`
+        }
+    }
+    
+    const convertAudioToMidi = async () => {
+        try {
+            // Initialize MidiConversionService if needed
+            if (!midiConversionService) {
+                const {MidiConversionService} = await import("../../service/MidiConversionService.js")
+                const project = service.project
+                midiConversionService = new MidiConversionService(project)
+            }
+            
+            // Get all convertible audio files
+            const audioFiles = midiConversionService.getConvertibleAudioFiles()
+            
+            if (audioFiles.length === 0) {
+                addMessage('assistant', '🎵 No audio files found in your project to convert to MIDI.')
+                return
+            }
+            
+            // Show conversion options
+            const fileList = audioFiles.map((file: any) => file.fileName.getValue()).join('\n• ')
+            addMessage('assistant', `🎵 Found ${audioFiles.length} audio file(s) that can be converted to MIDI:\n\n• ${fileList}\n\nClick on any audio track in your project to see the "Convert to MIDI" button, or use the conversion panel that just opened.`)
+            
+            // Open conversion panel for the first file as an example
+            if (audioFiles.length > 0) {
+                await midiConversionService.convertAudioToMidi(audioFiles[0] as any)
+            }
+            
+        } catch (error) {
+            console.error('Error converting audio to MIDI:', error)
+            addMessage('assistant', '❌ Sorry, I encountered an error while trying to convert audio to MIDI. Please try again.')
         }
     }
     
@@ -292,22 +325,29 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
                             🎵 BPM: <span id="current-bpm">--</span>
                         </div>
                     </div>
-                    <div className="ai-chat-header-controls">
-                        <button 
-                            className="ai-chat-test"
-                            onclick={() => testBpmChange()}
-                            title="Test BPM Change"
-                        >
-                            🧪 Test
-                        </button>
-                        <button 
-                            className="ai-chat-close"
-                            onclick={toggleChat}
-                            title="Close Chat"
-                        >
-                            <Icon symbol={IconSymbol.Close} style={{width: '16px', height: '16px'}}/>
-                        </button>
-                    </div>
+                                    <div className="ai-chat-header-controls">
+                    <button 
+                        className="ai-chat-convert-midi"
+                        onclick={() => convertAudioToMidi()}
+                        title="Convert Audio to MIDI"
+                    >
+                        🎹 Convert to MIDI
+                    </button>
+                    <button 
+                        className="ai-chat-test"
+                        onclick={() => testBpmChange()}
+                        title="Test BPM Change"
+                    >
+                        🧪 Test
+                    </button>
+                    <button 
+                        className="ai-chat-close"
+                        onclick={toggleChat}
+                        title="Close Chat"
+                    >
+                        <Icon symbol={IconSymbol.Close} style={{width: '16px', height: '16px'}}/>
+                    </button>
+                </div>
                 </div>
                 
                 <div className="ai-chat-messages">

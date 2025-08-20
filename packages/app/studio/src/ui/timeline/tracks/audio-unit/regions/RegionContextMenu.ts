@@ -99,6 +99,25 @@ export const installRegionContextMenu =
                     }
                 }),
                 MenuItem.default({
+                    label: "Convert to MIDI",
+                    hidden: region.type !== "audio-region",
+                    separatorBefore: true
+                }).setTriggerProcedure(() => {
+                    if (region.type === "audio-region") {
+                                    // Import the MidiConversionService and convert the audio
+            import("../../../../../service/MidiConversionService.js").then(({MidiConversionService}) => {
+                            const midiService = new MidiConversionService(project)
+                            // Get the audio file from the region
+                            const audioFile = region.file
+                            if (audioFile) {
+                                midiService.convertAudioToMidi(audioFile.box)
+                            }
+                        }).catch(error => {
+                            console.error('Failed to load MidiConversionService:', error)
+                        })
+                    }
+                }),
+                MenuItem.default({
                     label: "Calc Bpm",
                     hidden: region.type !== "audio-region"
                 }).setTriggerProcedure(() => {

@@ -20,7 +20,7 @@ export const Dashboard = ({service}: Construct) => {
         <div className={className}>
             <article>
                 <h1>Welcome to Sona</h1>
-                <h2>Create ambient soundscapes, video game music, and background tracks with full DAW creativity</h2>
+                <h2>Generate bass, melody, percussion and chords for  ambient soundscapes, video game music, or any creative work with full customization</h2>
 
                 <div className="columns">
                     <div>

@@ -24,6 +24,30 @@ export const TrackHeader = ({lifecycle, service, trackBoxAdapter, audioUnitBoxAd
     const nameLabel = Inject.value("Untitled")
     const channelStrip: HTMLElement = <Group/>
     const {project} = service
+    
+    const convertAudioTrackToMidi = async () => {
+        try {
+                // Import and use MidiConversionService
+    const {MidiConversionService} = await import("../../../../service/MidiConversionService.js")
+            const midiService = new MidiConversionService(project)
+            
+            // Get all audio files from this track
+            const audioFiles = midiService.getConvertibleAudioFiles()
+            const trackAudioFiles = audioFiles.filter(file => {
+                // Check if this file is used in the current track
+                const fileName = file.fileName.getValue()
+                return fileName.includes(nameLabel.value) || true // For now, convert all audio files
+            })
+            
+            if (trackAudioFiles.length > 0) {
+                await midiService.convertAudioToMidi(trackAudioFiles[0])
+            } else {
+                console.log('🎵 No audio files found for this track')
+            }
+        } catch (error) {
+            console.error('🎵 Error converting audio track to MIDI:', error)
+        }
+    }
     lifecycle.ownAll(
         audioUnitBoxAdapter.input.catchupAndSubscribeLabelChange(option => nameLabel.value = option.unwrapOrElse("No Input")),
         trackBoxAdapter.indexField.catchupAndSubscribe(owner => {
@@ -51,6 +75,26 @@ export const TrackHeader = ({lifecycle, service, trackBoxAdapter, audioUnitBoxAd
                 <h5 style={{color: Colors.dark}}>{nameLabel}</h5>
             </div>
             {channelStrip}
+            {trackBoxAdapter.type === TrackType.Audio && (
+                <button 
+                    className="convert-to-midi-btn"
+                    onclick={() => convertAudioTrackToMidi()}
+                    title="Convert Audio to MIDI"
+                    style={{
+                        background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                        border: 'none',
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        fontSize: '10px',
+                        cursor: 'pointer',
+                        marginRight: '8px',
+                        transition: 'transform 0.2s ease'
+                    }}
+                >
+                    🎹 MIDI
+                </button>
+            )}
             <MenuButton root={MenuItem.root()
                 .setRuntimeChildrenProcedure(installTrackHeaderMenu(service, audioUnitBoxAdapter, trackBoxAdapter))}
                         style={{minWidth: "0", justifySelf: "end"}}
