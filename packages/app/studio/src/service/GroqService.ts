@@ -96,9 +96,18 @@ When users ask to change BPM or time signature, you should:
 
 When users ask to add samples, you should:
 1. Understand what kind of sample they want
-2. Explain that you'll add a random sample to their project
+2. Explain that you'll add a smart-selected sample based on their preferences
 3. Be encouraging and helpful
 4. Suggest they can ask for specific types of samples
+
+You can now understand requests like:
+- "Add a drum sample" → Gets a drum/percussion sample
+- "Add a slow sample" → Gets a sample with lower BPM
+- "Add a fast sample" → Gets a sample with higher BPM
+- "Add a bass sample" → Gets a bass/low frequency sample
+- "Add a melodic sample" → Gets a melodic/musical sample
+- "Add a dark sample" → Gets a moody/atmospheric sample
+- "Add an electronic sample" → Gets a synth/digital sample
 
 Available reverb parameters:
 - decay: 0.0 to 1.0 (reverb tail length)
@@ -403,15 +412,73 @@ Keep responses concise but informative.`
     private createSampleControl(aiResponse: string, userMessage: string): SampleControl | null {
         console.log('🎵 Creating sample control from AI response:', aiResponse)
         
-        // For now, we'll add a random sample when someone asks to add a sample
+        // Parse user message to understand what type of sample they want
+        const lowerMessage = userMessage.toLowerCase()
+        const samplePreferences = this.parseSamplePreferences(lowerMessage)
+        
         return {
             type: 'add_sample',
             parameters: {
-                random: true,
-                message: 'Adding a random sample to your project'
+                preferences: samplePreferences,
+                message: `Adding a ${samplePreferences.type} sample to your project`
             },
             message: aiResponse
         }
+    }
+    
+    private parseSamplePreferences(userMessage: string): {
+        type: string
+        speed: 'slow' | 'medium' | 'fast' | 'any'
+        mood: string
+        category: string
+    } {
+        const lowerMessage = userMessage.toLowerCase()
+        
+        // Determine sample type
+        let type = 'random'
+        if (lowerMessage.includes('drum') || lowerMessage.includes('percussion') || lowerMessage.includes('beat')) {
+            type = 'drum'
+        } else if (lowerMessage.includes('bass') || lowerMessage.includes('low') || lowerMessage.includes('sub')) {
+            type = 'bass'
+        } else if (lowerMessage.includes('melodic') || lowerMessage.includes('melody') || lowerMessage.includes('lead')) {
+            type = 'melodic'
+        } else if (lowerMessage.includes('pad') || lowerMessage.includes('ambient') || lowerMessage.includes('atmosphere')) {
+            type = 'pad'
+        } else if (lowerMessage.includes('fx') || lowerMessage.includes('effect') || lowerMessage.includes('sweep')) {
+            type = 'fx'
+        }
+        
+        // Determine speed preference
+        let speed: 'slow' | 'medium' | 'fast' | 'any' = 'any'
+        if (lowerMessage.includes('slow') || lowerMessage.includes('chill') || lowerMessage.includes('relaxed')) {
+            speed = 'slow'
+        } else if (lowerMessage.includes('fast') || lowerMessage.includes('energetic') || lowerMessage.includes('upbeat')) {
+            speed = 'fast'
+        } else if (lowerMessage.includes('medium') || lowerMessage.includes('moderate')) {
+            speed = 'medium'
+        }
+        
+        // Determine mood
+        let mood = 'any'
+        if (lowerMessage.includes('dark') || lowerMessage.includes('moody') || lowerMessage.includes('atmospheric')) {
+            mood = 'dark'
+        } else if (lowerMessage.includes('bright') || lowerMessage.includes('happy') || lowerMessage.includes('uplifting')) {
+            mood = 'bright'
+        } else if (lowerMessage.includes('aggressive') || lowerMessage.includes('heavy') || lowerMessage.includes('intense')) {
+            mood = 'aggressive'
+        }
+        
+        // Determine category
+        let category = 'any'
+        if (lowerMessage.includes('electronic') || lowerMessage.includes('synth') || lowerMessage.includes('digital')) {
+            category = 'electronic'
+        } else if (lowerMessage.includes('acoustic') || lowerMessage.includes('organic') || lowerMessage.includes('natural')) {
+            category = 'acoustic'
+        } else if (lowerMessage.includes('vocal') || lowerMessage.includes('voice') || lowerMessage.includes('singing')) {
+            category = 'vocal'
+        }
+        
+        return { type, speed, mood, category }
     }
     
     private async applySampleControl(sampleControl: SampleControl): Promise<void> {
@@ -419,7 +486,11 @@ Keep responses concise but informative.`
             console.log('🎵 Applying sample control:', sampleControl)
             
             if (sampleControl.type === 'add_sample') {
-                await this.addRandomSample()
+                if (sampleControl.parameters.preferences) {
+                    await this.addSmartSample(sampleControl.parameters.preferences)
+                } else {
+                    await this.addRandomSample()
+                }
             }
             
         } catch (error) {
@@ -449,6 +520,125 @@ Keep responses concise but informative.`
             
         } catch (error) {
             console.error('🎵 Error adding random sample:', error)
+        }
+    }
+    
+    private async addSmartSample(preferences: any): Promise<void> {
+        try {
+            console.log('🎵 Adding smart sample with preferences:', preferences)
+            
+            // Get available samples from the API
+            const samples = await SampleApi.all()
+            console.log('🎵 Available samples:', samples.length)
+            
+            if (samples.length === 0) {
+                console.warn('🎵 No samples available')
+                return
+            }
+            
+            // Filter samples based on preferences
+            let filteredSamples = samples
+            
+            // Filter by type (using sample name patterns)
+            if (preferences.type !== 'random') {
+                filteredSamples = filteredSamples.filter(sample => {
+                    const name = sample.name.toLowerCase()
+                    switch (preferences.type) {
+                        case 'drum':
+                            return name.includes('drum') || name.includes('kick') || name.includes('snare') || 
+                                   name.includes('hat') || name.includes('perc') || name.includes('beat')
+                        case 'bass':
+                            return name.includes('bass') || name.includes('sub') || name.includes('low') ||
+                                   name.includes('kick') || name.includes('808')
+                        case 'melodic':
+                            return name.includes('melody') || name.includes('lead') || name.includes('arp') ||
+                                   name.includes('chord') || name.includes('piano') || name.includes('synth')
+                        case 'pad':
+                            return name.includes('pad') || name.includes('ambient') || name.includes('atmosphere') ||
+                                   name.includes('drone') || name.includes('texture')
+                        case 'fx':
+                            return name.includes('fx') || name.includes('effect') || name.includes('sweep') ||
+                                   name.includes('transition') || name.includes('riser')
+                        default:
+                            return true
+                    }
+                })
+            }
+            
+            // Filter by speed (using BPM if available)
+            if (preferences.speed !== 'any') {
+                filteredSamples = filteredSamples.filter(sample => {
+                    const bpm = sample.bpm || 120
+                    switch (preferences.speed) {
+                        case 'slow':
+                            return bpm < 100
+                        case 'medium':
+                            return bpm >= 100 && bpm <= 140
+                        case 'fast':
+                            return bpm > 140
+                        default:
+                            return true
+                    }
+                })
+            }
+            
+            // Filter by mood (using name patterns)
+            if (preferences.mood !== 'any') {
+                filteredSamples = filteredSamples.filter(sample => {
+                    const name = sample.name.toLowerCase()
+                    switch (preferences.mood) {
+                        case 'dark':
+                            return name.includes('dark') || name.includes('moody') || name.includes('atmospheric') ||
+                                   name.includes('ambient') || name.includes('drone')
+                        case 'bright':
+                            return name.includes('bright') || name.includes('happy') || name.includes('uplifting') ||
+                                   name.includes('cheerful') || name.includes('energetic')
+                        case 'aggressive':
+                            return name.includes('aggressive') || name.includes('heavy') || name.includes('intense') ||
+                                   name.includes('distorted') || name.includes('industrial')
+                        default:
+                            return true
+                    }
+                })
+            }
+            
+            // Filter by category (using name patterns)
+            if (preferences.category !== 'any') {
+                filteredSamples = filteredSamples.filter(sample => {
+                    const name = sample.name.toLowerCase()
+                    switch (preferences.category) {
+                        case 'electronic':
+                            return name.includes('synth') || name.includes('digital') || name.includes('electronic') ||
+                                   name.includes('808') || name.includes('chip')
+                        case 'acoustic':
+                            return name.includes('acoustic') || name.includes('organic') || name.includes('natural') ||
+                                   name.includes('piano') || name.includes('guitar') || name.includes('violin')
+                        case 'vocal':
+                            return name.includes('vocal') || name.includes('voice') || name.includes('singing') ||
+                                   name.includes('choir') || name.includes('chant')
+                        default:
+                            return true
+                    }
+                })
+            }
+            
+            console.log('🎵 Filtered samples count:', filteredSamples.length)
+            
+            // If no samples match preferences, fall back to random
+            if (filteredSamples.length === 0) {
+                console.log('🎵 No samples match preferences, using random selection')
+                filteredSamples = samples
+            }
+            
+            // Pick a random sample from filtered results
+            const selectedSample = filteredSamples[Math.floor(Math.random() * filteredSamples.length)]
+            console.log('🎵 Selected smart sample:', selectedSample.name)
+            
+            // Add the sample to the project
+            await this.addSampleToProject(selectedSample)
+            
+        } catch (error) {
+            console.error('🎵 Error adding smart sample:', error)
         }
     }
     

@@ -46,11 +46,17 @@ The AI can automatically control these timeline settings:
 The AI can add samples to your project:
 
 #### Sample Addition
-- **"Add a sample"** → Adds a random sample to your project
-- **"Add some audio"** → Adds a random audio sample
-- **"Add a sound"** → Adds a random sound sample
+- **"Add a sample"** → Adds a smart-selected sample to your project
+- **"Add a drum sample"** → Gets a drum/percussion sample
+- **"Add a slow sample"** → Gets a sample with lower BPM
+- **"Add a fast sample"** → Gets a sample with higher BPM
+- **"Add a bass sample"** → Gets a bass/low frequency sample
+- **"Add a melodic sample"** → Gets a melodic/musical sample
+- **"Add a dark sample"** → Gets a moody/atmospheric sample
+- **"Add an electronic sample"** → Gets a synth/digital sample
 - Creates new audio tracks automatically
 - Samples appear in the timeline immediately
+- Smart filtering based on your preferences
 
 ## How to Use
 
@@ -111,8 +117,18 @@ Ask the AI to adjust BPM and time signature:
 **Result**: `🎵 Applied signature changes: nominator: 3, denominator: 4`
 
 ### Sample Addition
-**You**: "Add a sample to my project"
-**AI**: "I'll add a random sample to your project! This will create a new audio track that you can use in your music."
+**You**: "Add a drum sample to my project"
+**AI**: "I'll add a drum sample to your project! I'll select one that fits your needs."
+
+**Result**: `🎵 Added sample to your project! Check the timeline for the new audio track.`
+
+**You**: "Add a slow, dark sample"
+**AI**: "I'll add a slow, dark sample to your project! This will create a moody, atmospheric track."
+
+**Result**: `🎵 Added sample to your project! Check the timeline for the new audio track.`
+
+**You**: "Add a fast electronic sample"
+**AI**: "I'll add a fast electronic sample to your project! This will create an energetic, upbeat track."
 
 **Result**: `🎵 Added sample to your project! Check the timeline for the new audio track.`
 
