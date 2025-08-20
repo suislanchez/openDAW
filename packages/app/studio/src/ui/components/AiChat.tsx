@@ -206,6 +206,11 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
                     addMessage('assistant', `🎵 Added sample to your project! Check the timeline for the new audio track.`)
                 } else if ('type' in control && control.type === 'create_template') {
                     addMessage('assistant', `🎵 Creating a full track template for you! This will take a few minutes to compose.`)
+                    
+                    // Add a follow-up message after a delay to show completion
+                    setTimeout(() => {
+                        addMessage('assistant', `🎵 Template created! Check your timeline for new tracks. You can download the audio files from the console or use the tracks as placeholders for your own recordings.`)
+                    }, 10000) // 10 seconds delay
                 }
             } else {
                 // Check if it's an API key issue

@@ -759,14 +759,8 @@ Keep responses concise but informative.`
                         index: startIndex + index 
                     })
                     
-                    // Create an audio file box for the stem
-                    const audioFileBox = AudioFileBox.create(boxGraph, UUID.generate(), box => {
-                        box.fileName.setValue(`${stemType}_stem`)
-                        box.startInSeconds.setValue(0)
-                        box.endInSeconds.setValue(30) // Default duration
-                    })
-                    
-                    // Create an audio region box
+                    // Create an audio region box without referencing an audio file
+                    // This creates a placeholder track that won't trigger sample loading errors
                     const duration = Math.round(PPQN.secondsToPulses(30, this.getCurrentBpm()))
                     AudioRegionBox.create(boxGraph, UUID.generate(), box => {
                         box.position.setValue(0)
@@ -774,15 +768,23 @@ Keep responses concise but informative.`
                         box.loopDuration.setValue(duration)
                         box.regions.refer(trackBox.regions)
                         box.hue.setValue(ColorCodes.forTrackType(trackBox.type.getValue()))
-                        box.label.setValue(`${stemType} stem`)
-                        box.file.refer(audioFileBox)
+                        box.label.setValue(`${stemType} stem (Beatoven)`)
+                        
+                        // Don't reference an audio file to avoid sample loading errors
+                        // box.file.refer(audioFileBox)
                     })
                     
-                    console.log(`🎵 Added ${stemType} stem to project`)
+                    console.log(`🎵 Added ${stemType} stem track to project`)
                 })
                 
-                console.log('🎵 Successfully added all Beatoven stems to project')
+                console.log('🎵 Successfully added all Beatoven stem tracks to project')
             }, false)
+            
+            // Show success message with download instructions
+            console.log('🎵 Beatoven stems added as tracks! You can now:')
+            console.log('🎵 1. Download the audio files manually from the URLs above')
+            console.log('🎵 2. Import them into your project')
+            console.log('🎵 3. Or use the tracks as placeholders for your own recordings')
             
         } catch (error) {
             console.error('🎵 Error adding Beatoven stems to project:', error)

@@ -72,6 +72,7 @@ The AI can create full track templates using Beatoven.ai:
 - Creates separate stems (bass, chords, melody, percussion)
 - Places each stem as a separate track in your project
 - Takes 2-5 minutes to compose (asynchronous)
+- **Note**: Currently creates track placeholders. Audio files can be downloaded manually from the console URLs.
 
 ## How to Use
 
