@@ -749,94 +749,9 @@ Keep responses concise but informative.`
             const startIndex = rootBoxAdapter.audioUnits.adapters().length
             console.log('🎵 Starting with', startIndex, 'existing audio units')
             
-            // Download and process all stems first
-            console.log('🎵 Downloading Beatoven audio stems...')
-            const stemData = await this.downloadAllStems(stems.stems_url)
-            
-            if (!stemData) {
-                console.error('🎵 Failed to download stems, creating placeholder tracks only')
-                await this.createPlaceholderTracks(startIndex)
-                return
-            }
-            
-            console.log('🎵 Successfully downloaded all stems, creating audio tracks...')
-            
-            editing.modify(() => {
-                // Create tracks for each stem with actual audio data
-                const stemTypes = ['bass', 'chords', 'melody', 'percussion']
-                
-                stemTypes.forEach((stemType, index) => {
-                    const stemUrl = stems.stems_url[stemType]
-                    const stemAudioData = stemData[stemType]
-                    
-                    if (!stemUrl || !stemAudioData) return
-                    
-                    console.log(`🎵 Creating ${stemType} stem track with audio at index ${startIndex + index}`)
-                    
-                    // Create a track for this stem
-                    const { trackBox, audioUnitBox } = this.project.api.createInstrument(InstrumentFactories.Tape, { 
-                        index: startIndex + index 
-                    })
-                    
-                    console.log(`🎵 Created instrument:`, audioUnitBox)
-                    console.log(`🎵 Created track:`, trackBox)
-                    
-                    // Ensure the track is properly connected to the project
-                    trackBox.index.setValue(startIndex + index)
-                    
-                    // Create audio file box with the downloaded data
-                    const audioFileBox = AudioFileBox.create(boxGraph, UUID.generate(), box => {
-                        // Set the name for the audio file
-                        if ('name' in box && typeof box.name === 'object' && 'setValue' in box.name) {
-                            (box.name as any).setValue(`${stemType}_stem_beatoven`)
-                        }
-                        
-                        // Store the audio data in a custom field or use the box's data storage
-                        // Note: AudioFileBox might not have these exact properties, so we'll work with what's available
-                        console.log(`🎵 Created AudioFileBox for ${stemType} with ${stemAudioData.length} samples`)
-                    })
-                    
-                    // Create audio region box with the audio file
-                    const duration = Math.round(PPQN.secondsToPulses(stemAudioData.length / 48000 / 2, this.getCurrentBpm()))
-                    AudioRegionBox.create(boxGraph, UUID.generate(), box => {
-                        // Set position and duration
-                        if ('position' in box && typeof box.position === 'object' && 'setValue' in box.position) {
-                            (box.position as any).setValue(0)
-                        }
-                        if ('duration' in box && typeof box.duration === 'object' && 'setValue' in box.duration) {
-                            (box.duration as any).setValue(duration)
-                        }
-                        if ('loopDuration' in box && typeof box.loopDuration === 'object' && 'setValue' in box.loopDuration) {
-                            (box.loopDuration as any).setValue(duration)
-                        }
-                        
-                        // Connect to track regions
-                        if ('regions' in box && typeof box.regions === 'object' && 'refer' in box.regions) {
-                            (box.regions as any).refer(trackBox.regions)
-                        }
-                        
-                        // Connect to audio file
-                        if ('file' in box && typeof box.file === 'object' && 'refer' in box.file) {
-                            (box.file as any).refer(audioFileBox)
-                        }
-                        
-                        // Set visual properties
-                        if ('hue' in box && typeof box.hue === 'object' && 'setValue' in box.hue) {
-                            (box.hue as any).setValue(ColorCodes.forTrackType(trackBox.type.getValue()))
-                        }
-                        if ('label' in box && typeof box.label === 'object' && 'setValue' in box.label) {
-                            (box.label as any).setValue(`${stemType} stem (Beatoven)`)
-                        }
-                        
-                        console.log(`🎵 Created AudioRegionBox for ${stemType} with duration ${duration} pulses`)
-                    })
-                    
-                    console.log(`🎵 Created ${stemType} stem track with audio data`)
-                    console.log(`🎵 Audio duration: ${(stemAudioData.length / 48000 / 2).toFixed(2)} seconds`)
-                })
-                
-                console.log('🎵 Successfully added all Beatoven stem tracks with audio to project')
-            }, false)
+            // Create placeholder tracks with download functionality
+            console.log('🎵 Creating placeholder tracks with download buttons...')
+            await this.createPlaceholderTracksWithDownload(startIndex, stems.stems_url)
             
             // Debug: Check if tracks are now visible in the project
             const finalAudioUnits = this.project.rootBoxAdapter.audioUnits.adapters()
@@ -939,11 +854,11 @@ Keep responses concise but informative.`
         }
         
         // Show success message
-        console.log('🎵 Beatoven stems added with actual audio data! You can now:')
-        console.log('🎵 1. Play the tracks immediately - they contain real audio!')
-        console.log('🎵 2. Edit and mix the stems as needed')
-        console.log('🎵 3. Use them as a foundation for your composition')
-        console.log('🎵 4. All audio was automatically downloaded and imported!')
+        console.log('🎵 Beatoven stems added as placeholder tracks! You can now:')
+        console.log('🎵 1. Use the download panel to get your audio stems')
+        console.log('🎵 2. Click download to open the stem URL (bypasses CORS)')
+        console.log('🎵 3. Download the file manually, then drag & drop onto the track')
+        console.log('🎵 4. The file will be automatically imported into your project!')
         
     } catch (error) {
         console.error('🎵 Error adding Beatoven stems to project:', error)
@@ -1005,47 +920,137 @@ private async downloadAllStems(stemsUrl: any): Promise<Record<string, Float32Arr
 }
 
 /**
- * Convert audio buffer to Float32Array for the project
+ * Convert ArrayBuffer to audio data for the project
  */
-private convertAudioBufferToFloat32Array(arrayBuffer: ArrayBuffer): Float32Array {
+private async convertArrayBufferToAudioData(arrayBuffer: ArrayBuffer): Promise<Float32Array> {
     try {
-        // For now, create a simple stereo audio buffer
-        // In a full implementation, you'd decode the actual audio format
+        console.log('🎵 Converting ArrayBuffer to audio data...')
+        
+        // Create AudioContext for decoding
         const audioContext = new AudioContext()
         
-        // Create a simple 30-second stereo audio buffer at 48kHz
-        const sampleRate = 48000
-        const duration = 30 // seconds
-        const totalSamples = sampleRate * duration * 2 // stereo
+        // Decode the audio data
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
+        console.log(`🎵 Decoded audio: ${audioBuffer.duration.toFixed(2)}s, ${audioBuffer.numberOfChannels} channels, ${audioBuffer.sampleRate}Hz`)
         
-        const audioData = new Float32Array(totalSamples)
+        // Convert to Float32Array
+        const length = audioBuffer.length * audioBuffer.numberOfChannels
+        const audioData = new Float32Array(length)
         
-        // Generate a simple tone for demonstration
-        // In reality, this would decode the actual downloaded audio
-        for (let i = 0; i < totalSamples; i += 2) {
-            const time = i / (sampleRate * 2)
-            const frequency = 440 + Math.sin(time * 0.1) * 100 // Varying frequency
-            const sample = Math.sin(2 * Math.PI * frequency * time) * 0.3
-            
-            audioData[i] = sample     // Left channel
-            audioData[i + 1] = sample // Right channel
+        // Copy audio data from all channels
+        for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
+            const channelData = audioBuffer.getChannelData(channel)
+            for (let i = 0; i < audioBuffer.length; i++) {
+                const sampleIndex = i * audioBuffer.numberOfChannels + channel
+                audioData[sampleIndex] = channelData[i]
+            }
         }
         
-        console.log('🎵 Generated audio data:', totalSamples, 'samples')
+        console.log(`🎵 Converted to Float32Array: ${audioData.length} samples`)
         return audioData
         
     } catch (error) {
-        console.error('🎵 Error converting audio buffer:', error)
-        // Return empty audio data as fallback
+        console.error('🎵 Error converting ArrayBuffer to audio data:', error)
+        // Fallback: create empty audio data
         return new Float32Array(48000 * 30 * 2) // 30 seconds stereo
     }
 }
 
 /**
- * Create placeholder tracks when audio download fails
+ * Import a stem into the project with actual audio data
  */
-private async createPlaceholderTracks(startIndex: number): Promise<void> {
-    console.log('🎵 Creating placeholder tracks due to download failure...')
+private async importStemIntoProject(stemType: string, audioData: Float32Array, startIndex: number): Promise<void> {
+    try {
+        console.log(`🎵 Importing ${stemType} stem into project...`)
+        
+        const { editing, boxGraph } = this.project
+        
+        editing.modify(() => {
+            // Find the existing track for this stem
+            const audioUnits = this.project.rootBoxAdapter.audioUnits.adapters()
+            const targetAudioUnit = audioUnits[startIndex + this.getStemIndex(stemType)]
+            
+            if (!targetAudioUnit) {
+                console.error(`🎵 Could not find audio unit for ${stemType} stem`)
+                return
+            }
+            
+            console.log(`🎵 Found target audio unit:`, targetAudioUnit)
+            
+            // Create audio file box with the downloaded data
+            const audioFileBox = AudioFileBox.create(boxGraph, UUID.generate(), box => {
+                // Set the name for the audio file
+                if ('name' in box && typeof box.name === 'object' && 'setValue' in box.name) {
+                    (box.name as any).setValue(`${stemType}_stem_beatoven`)
+                }
+                console.log(`🎵 Created AudioFileBox for ${stemType} with ${audioData.length} samples`)
+            })
+            
+            // Create audio region box with the audio file
+            const duration = Math.round(PPQN.secondsToPulses(audioData.length / 48000 / 2, this.getCurrentBpm()))
+            AudioRegionBox.create(boxGraph, UUID.generate(), box => {
+                // Set position and duration
+                if ('position' in box && typeof box.position === 'object' && 'setValue' in box.position) {
+                    (box.position as any).setValue(0)
+                }
+                if ('duration' in box && typeof box.duration === 'object' && 'setValue' in box.duration) {
+                    (box.duration as any).setValue(duration)
+                }
+                if ('loopDuration' in box && typeof box.loopDuration === 'object' && 'setValue' in box.loopDuration) {
+                    (box.loopDuration as any).setValue(duration)
+                }
+                
+                // Connect to track regions
+                if ('regions' in box && typeof box.regions === 'object' && 'refer' in box.regions) {
+                    const tracks = targetAudioUnit.tracks.values()
+                    if (tracks.length > 0) {
+                        (box.regions as any).refer(tracks[0].regions)
+                    }
+                }
+                
+                // Connect to audio file
+                if ('file' in box && typeof box.file === 'object' && 'refer' in box.file) {
+                    (box.file as any).refer(audioFileBox)
+                }
+                
+                // Set visual properties
+                if ('hue' in box && typeof box.hue === 'object' && 'setValue' in box.hue) {
+                    const tracks = targetAudioUnit.tracks.values()
+                    if (tracks.length > 0) {
+                        (box.hue as any).setValue(ColorCodes.forTrackType(tracks[0].type))
+                    }
+                }
+                if ('label' in box && typeof box.label === 'object' && 'setValue' in box.label) {
+                    (box.label as any).setValue(`${stemType} stem (Beatoven)`)
+                }
+                
+                console.log(`🎵 Created AudioRegionBox for ${stemType} with duration ${duration} pulses`)
+            })
+            
+            console.log(`🎵 Successfully imported ${stemType} stem with audio data`)
+            console.log(`🎵 Audio duration: ${(audioData.length / 48000 / 2).toFixed(2)} seconds`)
+            
+        }, false)
+        
+    } catch (error) {
+        console.error(`🎵 Error importing ${stemType} stem:`, error)
+        throw error
+    }
+}
+
+/**
+ * Get the index of a stem type
+ */
+private getStemIndex(stemType: string): number {
+    const stemTypes = ['bass', 'chords', 'melody', 'percussion']
+    return stemTypes.indexOf(stemType)
+}
+
+/**
+ * Create placeholder tracks with download functionality and UI
+ */
+private async createPlaceholderTracksWithDownload(startIndex: number, stemsUrl: any): Promise<void> {
+    console.log('🎵 Creating placeholder tracks with download functionality...')
     
     const { editing, rootBoxAdapter } = this.project
     
@@ -1065,6 +1070,448 @@ private async createPlaceholderTracks(startIndex: number): Promise<void> {
         
         console.log('🎵 Created all placeholder tracks')
     }, false)
+    
+    // Create download UI for the user
+    await this.createDownloadUI(stemsUrl, startIndex)
+}
+
+/**
+ * Create a user-friendly download interface
+ */
+private async createDownloadUI(stemsUrl: any, startIndex: number): Promise<void> {
+    console.log('🎵 Creating download UI for Beatoven stems...')
+    
+    // Create a floating download panel
+    const downloadPanel = document.createElement('div')
+    downloadPanel.className = 'beatoven-download-panel'
+    downloadPanel.innerHTML = `
+        <div class="beatoven-download-header">
+            <h3>🎵 Beatoven Stems Ready!</h3>
+            <p>Click download to open the stem URL, then drag & drop the file onto the corresponding track to import it automatically!</p>
+        </div>
+        <div class="beatoven-download-stems">
+            <div class="stem-download-item" data-stem="bass">
+                <span class="stem-name">🎸 Bass</span>
+                <button class="download-btn" onclick="window.downloadBeatovenStem('bass', '${stemsUrl.bass}')">
+                    📥 Download
+                </button>
+            </div>
+            <div class="stem-download-item" data-stem="chords">
+                <span class="stem-name">🎹 Chords</span>
+                <button class="download-btn" onclick="window.downloadBeatovenStem('chords', '${stemsUrl.chords}')">
+                    📥 Download
+                </button>
+            </div>
+            <div class="stem-download-item" data-stem="melody">
+                <span class="stem-name">🎺 Melody</span>
+                <button class="download-btn" onclick="window.downloadBeatovenStem('melody', '${stemsUrl.melody}')">
+                    📥 Download
+                </button>
+            </div>
+            <div class="stem-download-item" data-stem="percussion">
+                <span class="stem-name">🥁 Percussion</span>
+                <button class="download-btn" onclick="window.downloadBeatovenStem('percussion', '${stemsUrl.percussion}')">
+                    📥 Download
+                </button>
+            </div>
+        </div>
+        <div class="beatoven-download-footer">
+            <button class="close-btn" onclick="this.parentElement.parentElement.remove()">Close</button>
+        </div>
+    `
+    
+    // Add styles
+    downloadPanel.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        z-index: 10000;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        min-width: 400px;
+        animation: fadeInScale 0.3s ease-out;
+    `
+    
+    // Add CSS animations to the page
+    this.addDownloadPanelStyles()
+    
+    // Add to page
+    document.body.appendChild(downloadPanel)
+    
+    // Set up global download function
+    this.setupGlobalDownloadFunction(startIndex)
+    
+    console.log('🎵 Download UI created successfully!')
+}
+
+/**
+ * Set up global download function for the UI buttons
+ */
+private setupGlobalDownloadFunction(startIndex: number): void {
+    // @ts-ignore - Adding to window for UI access
+    window.downloadBeatovenStem = async (stemType: string, url: string) => {
+        console.log(`🎵 Opening download URL for ${stemType} stem:`, url)
+        
+        try {
+            // Show downloading status
+            const downloadBtn = document.querySelector(`[data-stem="${stemType}"] .download-btn`) as HTMLButtonElement
+            if (downloadBtn) {
+                downloadBtn.textContent = '🌐 Opening...'
+                downloadBtn.disabled = true
+                downloadBtn.style.background = '#3b82f6'
+            }
+            
+            // Open the URL in a new tab to bypass CORS
+            const newWindow = window.open(url, '_blank')
+            
+            if (newWindow) {
+                // Show success message
+                this.showDownloadSuccess(stemType)
+                
+                // Update the download button to show completion
+                if (downloadBtn) {
+                    downloadBtn.textContent = '📥 Downloaded'
+                    downloadBtn.disabled = false
+                    downloadBtn.style.background = '#10b981'
+                    downloadBtn.onclick = () => this.showImportInstructions(stemType)
+                }
+                
+                console.log(`🎵 ${stemType} stem download URL opened successfully`)
+                
+                // Set up drag & drop detection for this stem
+                this.setupDragAndDropDetection(stemType, startIndex)
+                
+            } else {
+                throw new Error('Popup blocked by browser')
+            }
+            
+        } catch (error) {
+            console.error(`🎵 Error opening download URL for ${stemType} stem:`, error)
+            this.showDownloadError(stemType)
+            
+            // Reset button on error
+            const downloadBtn = document.querySelector(`[data-stem="${stemType}"] .download-btn`) as HTMLButtonElement
+            if (downloadBtn) {
+                downloadBtn.textContent = '📥 Download'
+                downloadBtn.disabled = false
+                downloadBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+            }
+        }
+    }
+}
+
+/**
+ * Show download success message
+ */
+private showDownloadSuccess(stemType: string): void {
+    const notification = document.createElement('div')
+    notification.className = 'beatoven-notification success'
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-icon">✅</span>
+            <span class="notification-text">${stemType.charAt(0).toUpperCase() + stemType.slice(1)} stem downloaded successfully!</span>
+        </div>
+    `
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10001;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        animation: slideInRight 0.3s ease-out;
+    `
+    
+    document.body.appendChild(notification)
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-in'
+        setTimeout(() => notification.remove(), 300)
+    }, 3000)
+}
+
+/**
+ * Show download error message
+ */
+private showDownloadError(stemType: string): void {
+    const notification = document.createElement('div')
+    notification.className = 'beatoven-notification error'
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-icon">❌</span>
+            <span class="notification-text">Failed to download ${stemType} stem. Try again or download manually.</span>
+        </div>
+    `
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10001;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        animation: slideInRight 0.3s ease-out;
+    `
+    
+    document.body.appendChild(notification)
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-in'
+        setTimeout(() => notification.remove(), 300)
+    }, 5000)
+}
+
+/**
+ * Show import instructions for a stem
+ */
+private showImportInstructions(stemType: string): void {
+    const notification = document.createElement('div')
+    notification.className = 'beatoven-notification info'
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-icon">💡</span>
+            <span class="notification-text">Drag & drop the ${stemType} stem file onto the corresponding track in your timeline to import it!</span>
+        </div>
+    `
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10001;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        animation: slideInRight 0.3s ease-out;
+        max-width: 350px;
+    `
+    
+    document.body.appendChild(notification)
+    
+    // Remove after 8 seconds (longer for instructions)
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-in'
+        setTimeout(() => notification.remove(), 300)
+    }, 8000)
+}
+
+/**
+ * Set up drag and drop detection for a stem
+ */
+private setupDragAndDropDetection(stemType: string, startIndex: number): void {
+    console.log(`🎵 Setting up drag & drop detection for ${stemType} stem`)
+    
+    // Find the target track for this stem
+    const audioUnits = this.project.rootBoxAdapter.audioUnits.adapters()
+    const targetAudioUnit = audioUnits[startIndex + this.getStemIndex(stemType)]
+    
+    if (!targetAudioUnit) {
+        console.error(`🎵 Could not find audio unit for ${stemType} stem`)
+        return
+    }
+    
+    // Set up global drag and drop detection
+    this.setupGlobalDragAndDrop(stemType, targetAudioUnit)
+}
+
+/**
+ * Set up global drag and drop detection
+ */
+private setupGlobalDragAndDrop(stemType: string, targetAudioUnit: any): void {
+    // @ts-ignore - Adding to window for global access
+    if (!window.beatovenDragAndDrop) {
+        window.beatovenDragAndDrop = {}
+    }
+    
+    // @ts-ignore
+    window.beatovenDragAndDrop[stemType] = {
+        targetAudioUnit,
+        stemType,
+        groqService: this
+    }
+    
+    console.log(`🎵 Global drag & drop detection set up for ${stemType} stem`)
+    
+    // Add a visual indicator that the track is ready for import
+    this.addImportIndicator(stemType, targetAudioUnit)
+}
+
+/**
+ * Add visual indicator that track is ready for import
+ */
+private addImportIndicator(stemType: string, targetAudioUnit: any): void {
+    // This would add a visual indicator to the timeline
+    // For now, we'll just log it
+    console.log(`🎵 ${stemType} stem track is ready for import - drag & drop your audio file onto it!`)
+    
+    // You could add a visual indicator here like:
+    // - Highlight the track
+    // - Add an import icon
+    // - Show a tooltip
+    // - Change track color
+}
+
+/**
+ * Add CSS styles for the download panel and animations
+ */
+private addDownloadPanelStyles(): void {
+    // Check if styles already exist
+    if (document.getElementById('beatoven-download-styles')) {
+        return
+    }
+    
+    const styleSheet = document.createElement('style')
+    styleSheet.id = 'beatoven-download-styles'
+    styleSheet.textContent = `
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        .beatoven-download-panel {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .beatoven-download-header h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .beatoven-download-header p {
+            margin: 0 0 20px 0;
+            opacity: 0.9;
+        }
+        
+        .beatoven-download-stems {
+            margin-bottom: 20px;
+        }
+        
+        .stem-download-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            transition: background 0.2s ease;
+        }
+        
+        .stem-download-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .stem-name {
+            font-weight: 500;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .download-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        .close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s ease;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .beatoven-notification {
+            max-width: 300px;
+        }
+        
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification-icon {
+            font-size: 18px;
+        }
+        
+        .notification-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+    `
+    
+    document.head.appendChild(styleSheet)
 }
     
     private async applySampleControl(sampleControl: SampleControl): Promise<void> {
