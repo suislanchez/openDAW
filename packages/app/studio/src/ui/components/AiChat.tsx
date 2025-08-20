@@ -3,7 +3,7 @@ import {Icon} from "./Icon.tsx"
 import {IconSymbol} from "@opendaw/studio-adapters"
 import {Lifecycle, Terminator} from "@opendaw/lib-std"
 import {Events} from "@opendaw/lib-dom"
-import {GroqService, ChatMessage, AudioEffectControl, TimelineControl, SampleControl} from "@/service/GroqService"
+import {GroqService, ChatMessage, AudioEffectControl, TimelineControl, SampleControl, TemplateControl} from "@/service/GroqService"
 import {StudioService} from "@/service/StudioService"
 import "./AiChat.sass"
 
@@ -204,6 +204,8 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
                     addMessage('assistant', `🎵 Applied ${control.type} changes: ${paramText}`)
                 } else if ('type' in control && control.type === 'add_sample') {
                     addMessage('assistant', `🎵 Added sample to your project! Check the timeline for the new audio track.`)
+                } else if ('type' in control && control.type === 'create_template') {
+                    addMessage('assistant', `🎵 Creating a full track template for you! This will take a few minutes to compose.`)
                 }
             } else {
                 // Check if it's an API key issue

@@ -29,13 +29,22 @@ export interface SampleControl {
     message: string
 }
 
+export interface TemplateControl {
+    type: 'create_template'
+    parameters: Record<string, any>
+    message: string
+}
+
 export class GroqService {
     private readonly apiKey: string
     private readonly baseUrl = 'https://api.groq.com/openai/v1/chat/completions'
+    private readonly beatovenApiKey: string
+    private readonly beatovenBaseUrl = 'https://public-api.beatoven.ai'
     
     constructor(private project: Project) {
         // Get API key from environment variable or use a placeholder
         this.apiKey = import.meta.env.VITE_GROQ_API_KEY || 'your-api-key-here'
+        this.beatovenApiKey = import.meta.env.VITE_BEATOVEN_API_KEY || 'your-beatoven-api-key-here'
         
         // Debug: Log the project structure
         console.log('🎵 GroqService initialized with project:', this.project)
@@ -129,6 +138,18 @@ Available timeline parameters:
 - BPM: 30 to 1000 (beats per minute)
 - Time signature: 1/1 to 32/32 (beats per measure)
 
+When users ask to create templates or songs, you should:
+1. Understand the style, mood, and genre they want
+2. Explain that you'll compose a full track with separate stems
+3. Be encouraging and creative
+4. Suggest they can ask for specific styles like "groovy", "chill", "energetic", etc.
+
+You can now understand requests like:
+- "Make a template for a groovy song" → Creates a groovy track with separate stems
+- "Create a chill lo-fi track" → Creates a peaceful, ambient track
+- "Make an energetic dance song" → Creates an upbeat, danceable track
+- "Compose a dark atmospheric track" → Creates a moody, atmospheric track
+
 Keep responses concise but informative.`
                         },
                         {
@@ -154,7 +175,7 @@ Keep responses concise but informative.`
         }
     }
     
-    async processRequest(message: string): Promise<AudioEffectControl | TimelineControl | SampleControl | null> {
+    async processRequest(message: string): Promise<AudioEffectControl | TimelineControl | SampleControl | TemplateControl | null> {
         const lowerMessage = message.toLowerCase()
         console.log('🎵 Processing request:', message)
         console.log('🎵 Lower message:', lowerMessage)
@@ -163,6 +184,30 @@ Keep responses concise but informative.`
         if (this.apiKey === 'your-api-key-here' || !this.apiKey) {
             console.warn('🎵 Cannot process request: Groq API key not configured')
             return null
+        }
+        
+        // Check if this is a template control request
+        if (lowerMessage.includes('template') || lowerMessage.includes('song') || lowerMessage.includes('track') || 
+            lowerMessage.includes('compose') || lowerMessage.includes('create') || lowerMessage.includes('make')) {
+            console.log('🎵 Detected template control request')
+            try {
+                const aiResponse = await this.sendMessage(message)
+                console.log('🎵 AI response:', aiResponse)
+                
+                // Create template control
+                const templateControl = this.createTemplateControl(aiResponse, lowerMessage)
+                console.log('🎵 Created template control:', templateControl)
+                
+                if (templateControl) {
+                    // Apply the template changes
+                    await this.applyTemplateControl(templateControl)
+                }
+                
+                return templateControl
+            } catch (error) {
+                console.error('🎵 Error processing template request:', error)
+                return null
+            }
         }
         
         // Check if this is a sample control request
@@ -184,7 +229,6 @@ Keep responses concise but informative.`
                 return sampleControl
             } catch (error) {
                 console.error('🎵 Error processing sample request:', error)
-                return null
             }
         }
         
@@ -479,6 +523,270 @@ Keep responses concise but informative.`
         }
         
         return { type, speed, mood, category }
+    }
+    
+    private createTemplateControl(aiResponse: string, userMessage: string): TemplateControl | null {
+        console.log('🎵 Creating template control from AI response:', aiResponse)
+        
+        // Parse user message to understand what kind of template they want
+        const lowerMessage = userMessage.toLowerCase()
+        const templatePreferences = this.parseTemplatePreferences(lowerMessage)
+        
+        return {
+            type: 'create_template',
+            parameters: {
+                preferences: templatePreferences,
+                message: `Creating a ${templatePreferences.style} template for you`
+            },
+            message: aiResponse
+        }
+    }
+    
+    private parseTemplatePreferences(userMessage: string): {
+        style: string
+        mood: string
+        duration: string
+        genre: string
+    } {
+        const lowerMessage = userMessage.toLowerCase()
+        
+        // Determine style
+        let style = 'groovy'
+        if (lowerMessage.includes('groovy') || lowerMessage.includes('funky')) {
+            style = 'groovy'
+        } else if (lowerMessage.includes('chill') || lowerMessage.includes('lo-fi') || lowerMessage.includes('peaceful')) {
+            style = 'chill'
+        } else if (lowerMessage.includes('energetic') || lowerMessage.includes('upbeat') || lowerMessage.includes('dance')) {
+            style = 'energetic'
+        } else if (lowerMessage.includes('dark') || lowerMessage.includes('moody') || lowerMessage.includes('atmospheric')) {
+            style = 'dark'
+        } else if (lowerMessage.includes('bright') || lowerMessage.includes('happy') || lowerMessage.includes('uplifting')) {
+            style = 'bright'
+        }
+        
+        // Determine mood
+        let mood = 'groovy'
+        if (lowerMessage.includes('chill') || lowerMessage.includes('relaxed')) {
+            mood = 'chill'
+        } else if (lowerMessage.includes('energetic') || lowerMessage.includes('upbeat')) {
+            mood = 'energetic'
+        } else if (lowerMessage.includes('dark') || lowerMessage.includes('moody')) {
+            mood = 'dark'
+        } else if (lowerMessage.includes('bright') || lowerMessage.includes('happy')) {
+            mood = 'bright'
+        }
+        
+        // Determine duration
+        let duration = '30 seconds'
+        if (lowerMessage.includes('short') || lowerMessage.includes('quick')) {
+            duration = '15 seconds'
+        } else if (lowerMessage.includes('long') || lowerMessage.includes('extended')) {
+            duration = '60 seconds'
+        }
+        
+        // Determine genre
+        let genre = 'lo-fi'
+        if (lowerMessage.includes('hip hop') || lowerMessage.includes('hiphop')) {
+            genre = 'hip hop'
+        } else if (lowerMessage.includes('electronic') || lowerMessage.includes('edm')) {
+            genre = 'electronic'
+        } else if (lowerMessage.includes('jazz') || lowerMessage.includes('smooth')) {
+            genre = 'jazz'
+        } else if (lowerMessage.includes('rock') || lowerMessage.includes('guitar')) {
+            genre = 'rock'
+        }
+        
+        return { style, mood, duration, genre }
+    }
+    
+    private async applyTemplateControl(templateControl: TemplateControl): Promise<void> {
+        try {
+            console.log('🎵 Applying template control:', templateControl)
+            
+            if (templateControl.type === 'create_template') {
+                await this.createBeatovenTemplate(templateControl.parameters.preferences)
+            }
+            
+        } catch (error) {
+            console.error('🎵 Error applying template control:', error)
+        }
+    }
+    
+    private async createBeatovenTemplate(preferences: any): Promise<void> {
+        try {
+            console.log('🎵 Creating Beatoven template with preferences:', preferences)
+            
+            // Check if Beatoven API key is configured
+            if (this.beatovenApiKey === 'your-beatoven-api-key-here' || !this.beatovenApiKey) {
+                console.warn('🎵 Beatoven API key not configured. Please set VITE_BEATOVEN_API_KEY environment variable.')
+                return
+            }
+            
+            // Create the prompt for Beatoven
+            const prompt = this.createBeatovenPrompt(preferences)
+            console.log('🎵 Beatoven prompt:', prompt)
+            
+            // Compose the track
+            const taskId = await this.composeBeatovenTrack(prompt)
+            if (!taskId) {
+                console.error('🎵 Failed to start Beatoven composition')
+                return
+            }
+            
+            console.log('🎵 Beatoven composition started with task ID:', taskId)
+            
+            // Wait for composition to complete and get stems
+            const stems = await this.waitForBeatovenCompletion(taskId)
+            if (!stems) {
+                console.error('🎵 Failed to get Beatoven stems')
+                return
+            }
+            
+            console.log('🎵 Beatoven composition completed, stems:', stems)
+            
+            // Add stems to the project
+            await this.addBeatovenStemsToProject(stems)
+            
+        } catch (error) {
+            console.error('🎵 Error creating Beatoven template:', error)
+        }
+    }
+    
+    private createBeatovenPrompt(preferences: any): string {
+        const { style, mood, duration, genre } = preferences
+        
+        let prompt = `${duration} ${mood} ${genre} track`
+        
+        if (style === 'groovy') {
+            prompt += ' with groovy bass and funky drums'
+        } else if (style === 'chill') {
+            prompt += ' with peaceful melodies and ambient textures'
+        } else if (style === 'energetic') {
+            prompt += ' with upbeat rhythms and energetic leads'
+        } else if (style === 'dark') {
+            prompt += ' with moody atmospheres and deep bass'
+        } else if (style === 'bright') {
+            prompt += ' with uplifting harmonies and cheerful melodies'
+        }
+        
+        return prompt
+    }
+    
+    private async composeBeatovenTrack(prompt: string): Promise<string | null> {
+        try {
+            const response = await fetch(`${this.beatovenBaseUrl}/api/v1/tracks/compose`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.beatovenApiKey}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: { text: prompt },
+                    format: 'wav',
+                    looping: false
+                })
+            })
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
+            }
+            
+            const data = await response.json()
+            return data.task_id || null
+            
+        } catch (error) {
+            console.error('🎵 Error composing Beatoven track:', error)
+            return null
+        }
+    }
+    
+    private async waitForBeatovenCompletion(taskId: string): Promise<any | null> {
+        try {
+            let attempts = 0
+            const maxAttempts = 60 // Wait up to 5 minutes (5 seconds * 60)
+            
+            while (attempts < maxAttempts) {
+                const response = await fetch(`${this.beatovenBaseUrl}/api/v1/tasks/${taskId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${this.beatovenApiKey}`,
+                    }
+                })
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`)
+                }
+                
+                const data = await response.json()
+                console.log('🎵 Beatoven status check:', data.status)
+                
+                if (data.status === 'composed') {
+                    return data.meta
+                } else if (data.status === 'failed') {
+                    throw new Error('Beatoven composition failed')
+                }
+                
+                // Wait 5 seconds before next check
+                await new Promise(resolve => setTimeout(resolve, 5000))
+                attempts++
+            }
+            
+            throw new Error('Beatoven composition timed out')
+            
+        } catch (error) {
+            console.error('🎵 Error waiting for Beatoven completion:', error)
+            return null
+        }
+    }
+    
+    private async addBeatovenStemsToProject(stems: any): Promise<void> {
+        try {
+            console.log('🎵 Adding Beatoven stems to project:', stems)
+            
+            const { editing, boxGraph, rootBoxAdapter } = this.project
+            
+            editing.modify(() => {
+                // Create tracks for each stem
+                const stemTypes = ['bass', 'chords', 'melody', 'percussion']
+                const startIndex = rootBoxAdapter.audioUnits.adapters().length
+                
+                stemTypes.forEach((stemType, index) => {
+                    const stemUrl = stems.stems_url[stemType]
+                    if (!stemUrl) return
+                    
+                    // Create a track for this stem
+                    const { trackBox } = this.project.api.createInstrument(InstrumentFactories.Tape, { 
+                        index: startIndex + index 
+                    })
+                    
+                    // Create an audio file box for the stem
+                    const audioFileBox = AudioFileBox.create(boxGraph, UUID.generate(), box => {
+                        box.fileName.setValue(`${stemType}_stem`)
+                        box.startInSeconds.setValue(0)
+                        box.endInSeconds.setValue(30) // Default duration
+                    })
+                    
+                    // Create an audio region box
+                    const duration = Math.round(PPQN.secondsToPulses(30, this.getCurrentBpm()))
+                    AudioRegionBox.create(boxGraph, UUID.generate(), box => {
+                        box.position.setValue(0)
+                        box.duration.setValue(duration)
+                        box.loopDuration.setValue(duration)
+                        box.regions.refer(trackBox.regions)
+                        box.hue.setValue(ColorCodes.forTrackType(trackBox.type.getValue()))
+                        box.label.setValue(`${stemType} stem`)
+                        box.file.refer(audioFileBox)
+                    })
+                    
+                    console.log(`🎵 Added ${stemType} stem to project`)
+                })
+                
+                console.log('🎵 Successfully added all Beatoven stems to project')
+            }, false)
+            
+        } catch (error) {
+            console.error('🎵 Error adding Beatoven stems to project:', error)
+        }
     }
     
     private async applySampleControl(sampleControl: SampleControl): Promise<void> {
@@ -851,3 +1159,4 @@ Keep responses concise but informative.`
         }
     }
 }
+                                        

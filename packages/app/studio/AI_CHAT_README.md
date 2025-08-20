@@ -58,6 +58,21 @@ The AI can add samples to your project:
 - Samples appear in the timeline immediately
 - Smart filtering based on your preferences
 
+### 🎵 Template Creation
+The AI can create full track templates using Beatoven.ai:
+
+#### Template Creation
+- **"Make a template for a groovy song"** → Creates a groovy track with separate stems
+- **"Create a chill lo-fi track"** → Creates a peaceful, ambient track
+- **"Make an energetic dance song"** → Creates an upbeat, danceable track
+- **"Compose a dark atmospheric track"** → Creates a moody, atmospheric track
+- **"Make a short hip hop beat"** → Creates a quick hip hop track
+- **"Create a long jazz track"** → Creates an extended jazz composition
+- Automatically composes full tracks with AI
+- Creates separate stems (bass, chords, melody, percussion)
+- Places each stem as a separate track in your project
+- Takes 2-5 minutes to compose (asynchronous)
+
 ## How to Use
 
 ### 1. Access the Chat
@@ -132,6 +147,22 @@ Ask the AI to adjust BPM and time signature:
 
 **Result**: `🎵 Added sample to your project! Check the timeline for the new audio track.`
 
+### Template Creation
+**You**: "Make a template for a groovy song"
+**AI**: "I'll create a groovy track template for you! This will compose a full track with separate stems that you can mix and arrange."
+
+**Result**: `🎵 Creating a full track template for you! This will take a few minutes to compose.`
+
+**You**: "Create a chill lo-fi track"
+**AI**: "I'll compose a peaceful, ambient lo-fi track for you! This will create a relaxing atmosphere with separate stems."
+
+**Result**: `🎵 Creating a full track template for you! This will take a few minutes to compose.`
+
+**You**: "Make an energetic dance song"
+**AI**: "I'll create an upbeat, danceable track for you! This will get your energy flowing with separate stems for mixing."
+
+**Result**: `🎵 Creating a full track template for you! This will take a few minutes to compose.`
+
 ## Technical Details
 
 - **API**: Uses Groq's Llama3-8b model for fast responses
@@ -141,9 +172,10 @@ Ask the AI to adjust BPM and time signature:
 
 ## Requirements
 
-- Active internet connection for Groq API access
+- Active internet connection for Groq API and Beatoven.ai API access
 - Reverb or delay devices in your project for effect control
-- The AI will inform you if no effects are found
+- Beatoven API key for template creation (optional)
+- The AI will inform you if no effects are found or if APIs aren't configured
 
 ## Tips
 
@@ -166,18 +198,20 @@ Ask the AI to adjust BPM and time signature:
 
 ## Configuration
 
-### Setting Up Your Groq API Key
+### Setting Up Your API Keys
 
 1. **Create a `.env` file** in the `packages/app/studio/` directory
-2. **Add your API key**:
+2. **Add your API keys**:
    ```
    VITE_GROQ_API_KEY=your-actual-groq-api-key-here
+   VITE_BEATOVEN_API_KEY=your-actual-beatoven-api-key-here
    ```
 3. **Restart the application** for changes to take effect
 
 ### Example .env File
 ```
 VITE_GROQ_API_KEY=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
+VITE_BEATOVEN_API_KEY=qIN5iSz0CrGcFi0Ic8pGH3k9_iq6BSpC
 ```
 
 ### Security Notes
