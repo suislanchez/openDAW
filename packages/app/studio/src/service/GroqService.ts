@@ -1,5 +1,5 @@
 import {Project, InstrumentFactories, ColorCodes} from "@opendaw/studio-core"
-import {DelayDeviceBox, ReverbDeviceBox, AudioFileBox, AudioRegionBox} from "@opendaw/studio-boxes"
+import {DelayDeviceBox, ReverbDeviceBox, AudioFileBox, AudioRegionBox, ValueRegionBox} from "@opendaw/studio-boxes"
 import {BoxAdapter} from "@opendaw/studio-adapters"
 import {UUID} from "@opendaw/lib-std"
 import {PPQN} from "@opendaw/lib-dsp"
@@ -759,10 +759,10 @@ Keep responses concise but informative.`
                         index: startIndex + index 
                     })
                     
-                    // Create an audio region box without referencing an audio file
-                    // This creates a placeholder track that won't trigger sample loading errors
+                    // Create a value region box instead of audio region box
+                    // This avoids the audio file pointer requirement
                     const duration = Math.round(PPQN.secondsToPulses(30, this.getCurrentBpm()))
-                    AudioRegionBox.create(boxGraph, UUID.generate(), box => {
+                    ValueRegionBox.create(boxGraph, UUID.generate(), box => {
                         box.position.setValue(0)
                         box.duration.setValue(duration)
                         box.loopDuration.setValue(duration)
@@ -770,8 +770,8 @@ Keep responses concise but informative.`
                         box.hue.setValue(ColorCodes.forTrackType(trackBox.type.getValue()))
                         box.label.setValue(`${stemType} stem (Beatoven)`)
                         
-                        // Don't reference an audio file to avoid sample loading errors
-                        // box.file.refer(audioFileBox)
+                        // ValueRegionBox doesn't require audio file references
+                        // It's perfect for placeholder tracks
                     })
                     
                     console.log(`🎵 Added ${stemType} stem track to project`)
@@ -781,10 +781,11 @@ Keep responses concise but informative.`
             }, false)
             
             // Show success message with download instructions
-            console.log('🎵 Beatoven stems added as tracks! You can now:')
+            console.log('🎵 Beatoven stems added as ValueRegionBox tracks! You can now:')
             console.log('🎵 1. Download the audio files manually from the URLs above')
             console.log('🎵 2. Import them into your project')
             console.log('🎵 3. Or use the tracks as placeholders for your own recordings')
+            console.log('🎵 4. The tracks are ready to use immediately without audio loading errors!')
             
         } catch (error) {
             console.error('🎵 Error adding Beatoven stems to project:', error)
