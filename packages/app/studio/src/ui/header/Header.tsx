@@ -27,7 +27,7 @@ export const Header = ({lifecycle, service}: Construct) => {
         <header className={className}>
             <MenuButton root={service.menu}
                         appearance={{color: Colors.gray, activeColor: Colors.bright, tinyTriangle: true}}>
-                <h5>openDAW</h5>
+                <h5 className="sona-header">Sona</h5>
             </MenuButton>
             <hr/>
             <div style={{display: "flex"}}>
@@ -83,14 +83,6 @@ export const Header = ({lifecycle, service}: Construct) => {
             </Checkbox>
             <hr/>
             <div style={{flex: "1 0 0"}}/>
-            <a className="support"
-               href="https://www.patreon.com/bePatron?u=61769481"
-               target="_blank"
-               rel="noopener noreferrer"
-               data-patreon-widget-type="become-patron-button">
-                <img src="/become_a_patron_button.png" alt="Patreon"/>
-            </a>
-            <div style={{flex: "2 0 0"}}/>
             <hr/>
             <RadioGroup lifecycle={lifecycle}
                         model={new class implements ObservableValue<Nullable<Workspace.ScreenKeys>> {

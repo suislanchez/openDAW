@@ -40,6 +40,7 @@ export class GroqService {
     private readonly baseUrl = 'https://api.groq.com/openai/v1/chat/completions'
     private readonly beatovenApiKey: string
     private readonly beatovenBaseUrl = 'https://public-api.beatoven.ai'
+    private lastUserMessage: string = ''
     
     constructor(private project: Project) {
         // Get API key from environment variable or use a placeholder
@@ -179,6 +180,9 @@ Keep responses concise but informative.`
         const lowerMessage = message.toLowerCase()
         console.log('🎵 Processing request:', message)
         console.log('🎵 Lower message:', lowerMessage)
+        
+        // Store the user message for template prompt generation
+        this.lastUserMessage = message
         
         // Check if API key is configured
         if (this.apiKey === 'your-api-key-here' || !this.apiKey) {
@@ -550,52 +554,91 @@ Keep responses concise but informative.`
     } {
         const lowerMessage = userMessage.toLowerCase()
         
-        // Determine style
+        // Determine style based on user's actual request
         let style = 'groovy'
-        if (lowerMessage.includes('groovy') || lowerMessage.includes('funky')) {
+        if (lowerMessage.includes('groovy') || lowerMessage.includes('funky') || lowerMessage.includes('rhythmic')) {
             style = 'groovy'
-        } else if (lowerMessage.includes('chill') || lowerMessage.includes('lo-fi') || lowerMessage.includes('peaceful')) {
+        } else if (lowerMessage.includes('chill') || lowerMessage.includes('lo-fi') || lowerMessage.includes('peaceful') || lowerMessage.includes('calm')) {
             style = 'chill'
-        } else if (lowerMessage.includes('energetic') || lowerMessage.includes('upbeat') || lowerMessage.includes('dance')) {
+        } else if (lowerMessage.includes('energetic') || lowerMessage.includes('upbeat') || lowerMessage.includes('dance') || lowerMessage.includes('dynamic')) {
             style = 'energetic'
-        } else if (lowerMessage.includes('dark') || lowerMessage.includes('moody') || lowerMessage.includes('atmospheric')) {
+        } else if (lowerMessage.includes('dark') || lowerMessage.includes('moody') || lowerMessage.includes('atmospheric') || lowerMessage.includes('mysterious')) {
             style = 'dark'
-        } else if (lowerMessage.includes('bright') || lowerMessage.includes('happy') || lowerMessage.includes('uplifting')) {
+        } else if (lowerMessage.includes('bright') || lowerMessage.includes('happy') || lowerMessage.includes('uplifting') || lowerMessage.includes('cheerful')) {
             style = 'bright'
+        } else if (lowerMessage.includes('epic') || lowerMessage.includes('dramatic') || lowerMessage.includes('cinematic')) {
+            style = 'epic'
+        } else if (lowerMessage.includes('romantic') || lowerMessage.includes('intimate') || lowerMessage.includes('soft')) {
+            style = 'romantic'
+        } else if (lowerMessage.includes('8-bit') || lowerMessage.includes('chiptune') || lowerMessage.includes('retro') || lowerMessage.includes('nes')) {
+            style = 'retro'
+        } else if (lowerMessage.includes('ambient') || lowerMessage.includes('atmospheric') || lowerMessage.includes('space')) {
+            style = 'ambient'
         }
         
-        // Determine mood
+        // Determine mood based on user's actual request
         let mood = 'groovy'
-        if (lowerMessage.includes('chill') || lowerMessage.includes('relaxed')) {
-            mood = 'chill'
-        } else if (lowerMessage.includes('energetic') || lowerMessage.includes('upbeat')) {
+        if (lowerMessage.includes('chill') || lowerMessage.includes('relaxed') || lowerMessage.includes('peaceful')) {
+            mood = 'peaceful'
+        } else if (lowerMessage.includes('energetic') || lowerMessage.includes('upbeat') || lowerMessage.includes('dynamic')) {
             mood = 'energetic'
-        } else if (lowerMessage.includes('dark') || lowerMessage.includes('moody')) {
-            mood = 'dark'
-        } else if (lowerMessage.includes('bright') || lowerMessage.includes('happy')) {
-            mood = 'bright'
+        } else if (lowerMessage.includes('dark') || lowerMessage.includes('moody') || lowerMessage.includes('mysterious')) {
+            mood = 'moody'
+        } else if (lowerMessage.includes('bright') || lowerMessage.includes('happy') || lowerMessage.includes('cheerful')) {
+            mood = 'cheerful'
+        } else if (lowerMessage.includes('epic') || lowerMessage.includes('dramatic') || lowerMessage.includes('intense')) {
+            mood = 'dramatic'
+        } else if (lowerMessage.includes('romantic') || lowerMessage.includes('intimate') || lowerMessage.includes('tender')) {
+            mood = 'romantic'
+        } else if (lowerMessage.includes('nostalgic') || lowerMessage.includes('retro') || lowerMessage.includes('vintage')) {
+            mood = 'nostalgic'
+        } else if (lowerMessage.includes('mysterious') || lowerMessage.includes('enigmatic') || lowerMessage.includes('curious')) {
+            mood = 'mysterious'
         }
         
-        // Determine duration
-        let duration = '30 seconds'
-        if (lowerMessage.includes('short') || lowerMessage.includes('quick')) {
+        // Determine duration based on user's actual request
+        let duration = '60 seconds' // Default to 1 minute instead of 30 seconds
+        if (lowerMessage.includes('short') || lowerMessage.includes('quick') || lowerMessage.includes('brief')) {
+            duration = '30 seconds'
+        } else if (lowerMessage.includes('very short') || lowerMessage.includes('tiny')) {
             duration = '15 seconds'
-        } else if (lowerMessage.includes('long') || lowerMessage.includes('extended')) {
-            duration = '60 seconds'
+        } else if (lowerMessage.includes('long') || lowerMessage.includes('extended') || lowerMessage.includes('full')) {
+            duration = '120 seconds'
+        } else if (lowerMessage.includes('2 minute') || lowerMessage.includes('120 seconds')) {
+            duration = '120 seconds'
+        } else if (lowerMessage.includes('5 minute') || lowerMessage.includes('300 seconds')) {
+            duration = '300 seconds'
         }
         
-        // Determine genre
+        // Determine genre based on user's actual request
         let genre = 'lo-fi'
-        if (lowerMessage.includes('hip hop') || lowerMessage.includes('hiphop')) {
-            genre = 'hip hop'
-        } else if (lowerMessage.includes('electronic') || lowerMessage.includes('edm')) {
+        if (lowerMessage.includes('hip hop') || lowerMessage.includes('hiphop') || lowerMessage.includes('rap') || lowerMessage.includes('trap')) {
+            genre = 'hip-hop'
+        } else if (lowerMessage.includes('electronic') || lowerMessage.includes('edm') || lowerMessage.includes('synth') || lowerMessage.includes('techno')) {
             genre = 'electronic'
-        } else if (lowerMessage.includes('jazz') || lowerMessage.includes('smooth')) {
+        } else if (lowerMessage.includes('jazz') || lowerMessage.includes('smooth') || lowerMessage.includes('swing')) {
             genre = 'jazz'
-        } else if (lowerMessage.includes('rock') || lowerMessage.includes('guitar')) {
+        } else if (lowerMessage.includes('rock') || lowerMessage.includes('guitar') || lowerMessage.includes('punk')) {
             genre = 'rock'
+        } else if (lowerMessage.includes('classical') || lowerMessage.includes('orchestral') || lowerMessage.includes('symphony')) {
+            genre = 'classical'
+        } else if (lowerMessage.includes('folk') || lowerMessage.includes('acoustic') || lowerMessage.includes('country')) {
+            genre = 'folk'
+        } else if (lowerMessage.includes('lo-fi') || lowerMessage.includes('lofi') || lowerMessage.includes('chillhop')) {
+            genre = 'lo-fi'
+        } else if (lowerMessage.includes('8-bit') || lowerMessage.includes('chiptune') || lowerMessage.includes('retro') || lowerMessage.includes('nes')) {
+            genre = 'chiptune'
+        } else if (lowerMessage.includes('ambient') || lowerMessage.includes('atmospheric') || lowerMessage.includes('space')) {
+            genre = 'ambient'
+        } else if (lowerMessage.includes('world') || lowerMessage.includes('ethnic') || lowerMessage.includes('tribal')) {
+            genre = 'world'
+        } else if (lowerMessage.includes('pop') || lowerMessage.includes('mainstream')) {
+            genre = 'pop'
+        } else if (lowerMessage.includes('blues') || lowerMessage.includes('soul')) {
+            genre = 'blues'
         }
         
+        console.log('🎵 Parsed template preferences from user request:', { style, mood, duration, genre })
         return { style, mood, duration, genre }
     }
     
@@ -653,23 +696,137 @@ Keep responses concise but informative.`
     }
     
     private createBeatovenPrompt(preferences: any): string {
+        const userMessage = this.lastUserMessage || ''
         const { style, mood, duration, genre } = preferences
         
-        let prompt = `${duration} ${mood} ${genre} track`
+        // Start building a comprehensive Beatoven prompt
+        let enhancedPrompt = ''
         
-        if (style === 'groovy') {
-            prompt += ' with groovy bass and funky drums'
-        } else if (style === 'chill') {
-            prompt += ' with peaceful melodies and ambient textures'
-        } else if (style === 'energetic') {
-            prompt += ' with upbeat rhythms and energetic leads'
-        } else if (style === 'dark') {
-            prompt += ' with moody atmospheres and deep bass'
-        } else if (style === 'bright') {
-            prompt += ' with uplifting harmonies and cheerful melodies'
+        // 1. Duration (always specified)
+        enhancedPrompt += `${duration} `
+        
+        // 2. Mood/Atmosphere (always specified)
+        enhancedPrompt += `${mood} `
+        
+        // 3. Genre/Style (always specified)
+        enhancedPrompt += `${genre} `
+        
+        // 4. Core user request (cleaned up)
+        let coreRequest = userMessage
+            .replace(/make|create|template|song|track|for|a|an|please|can you|would you/g, '')
+            .trim()
+        
+        enhancedPrompt += `${coreRequest} `
+        
+        // 5. Add "track" if not specified
+        if (!enhancedPrompt.includes('track') && !enhancedPrompt.includes('song') && !enhancedPrompt.includes('music')) {
+            enhancedPrompt += 'track '
         }
         
-        return prompt
+        // 6. Add specific instruments based on genre and style
+        enhancedPrompt += this.getInstrumentSuggestions(genre, style)
+        
+        // 7. Add structural ideas based on style
+        enhancedPrompt += this.getStructuralSuggestions(style, mood)
+        
+        // 8. Add tempo suggestions based on mood and style
+        enhancedPrompt += this.getTempoSuggestions(mood, style)
+        
+        // Clean up and format the final prompt
+        enhancedPrompt = enhancedPrompt.replace(/\s+/g, ' ').trim()
+        
+        console.log('🎵 Comprehensive Beatoven prompt created:', enhancedPrompt)
+        return enhancedPrompt
+    }
+    
+    private getInstrumentSuggestions(genre: string, style: string): string {
+        let instruments = ''
+        
+        // Genre-based instruments
+        if (genre === 'chiptune') {
+            instruments += 'with 8-bit synths, retro game sounds, and classic NES-style instruments '
+        } else if (genre === 'ambient') {
+            instruments += 'with atmospheric pads, soft synths, and ethereal textures '
+        } else if (genre === 'hip-hop') {
+            instruments += 'with heavy bass, trap drums, and urban percussion '
+        } else if (genre === 'electronic') {
+            instruments += 'with modern synths, electronic drums, and digital effects '
+        } else if (genre === 'jazz') {
+            instruments += 'with smooth piano, saxophone, and jazz drums '
+        } else if (genre === 'rock') {
+            instruments += 'with electric guitar, bass, and rock drums '
+        } else if (genre === 'classical') {
+            instruments += 'with orchestral strings, piano, and classical percussion '
+        } else if (genre === 'folk') {
+            instruments += 'with acoustic guitar, folk instruments, and natural percussion '
+        } else if (genre === 'world') {
+            instruments += 'with ethnic instruments, tribal drums, and cultural sounds '
+        } else if (genre === 'pop') {
+            instruments += 'with catchy synths, pop drums, and melodic leads '
+        } else if (genre === 'blues') {
+            instruments += 'with blues guitar, harmonica, and soulful vocals '
+        }
+        
+        // Style-based instruments
+        if (style === 'epic') {
+            instruments += 'featuring powerful brass, dramatic strings, and epic percussion '
+        } else if (style === 'romantic') {
+            instruments += 'with gentle piano, soft strings, and intimate acoustic sounds '
+        } else if (style === 'dark') {
+            instruments += 'using deep bass, eerie synths, and atmospheric effects '
+        } else if (style === 'bright') {
+            instruments += 'with uplifting synths, cheerful melodies, and bright percussion '
+        }
+        
+        return instruments
+    }
+    
+    private getStructuralSuggestions(style: string, mood: string): string {
+        let structure = ''
+        
+        if (style === 'epic') {
+            structure += 'with layered textures, dramatic build-ups, and cinematic progression '
+        } else if (style === 'ambient') {
+            structure += 'featuring evolving soundscapes, gradual changes, and atmospheric layers '
+        } else if (style === 'groovy') {
+            structure += 'with funky basslines, rhythmic patterns, and danceable grooves '
+        } else if (style === 'chill') {
+            structure += 'using smooth transitions, gentle progressions, and relaxing flow '
+        } else if (style === 'energetic') {
+            structure += 'with dynamic changes, energetic builds, and high-energy sections '
+        } else if (style === 'dark') {
+            structure += 'featuring moody atmospheres, tension building, and mysterious elements '
+        } else if (style === 'romantic') {
+            structure += 'with emotional chord progressions, intimate melodies, and tender arrangements '
+        } else if (style === 'retro') {
+            structure += 'using classic game music structure, nostalgic progressions, and retro patterns '
+        }
+        
+        return structure
+    }
+    
+    private getTempoSuggestions(mood: string, style: string): string {
+        let tempo = ''
+        
+        if (mood === 'peaceful' || mood === 'chill') {
+            tempo += 'at a slow, relaxing tempo '
+        } else if (mood === 'energetic' || mood === 'dynamic') {
+            tempo += 'at a fast, upbeat tempo around 128-140 BPM '
+        } else if (mood === 'dramatic' || mood === 'epic') {
+            tempo += 'with varying tempos, building from slow to intense '
+        } else if (mood === 'groovy' || mood === 'funky') {
+            tempo += 'at a medium tempo around 90-110 BPM for maximum groove '
+        } else if (mood === 'romantic') {
+            tempo += 'at a moderate tempo around 70-80 BPM for emotional impact '
+        } else if (mood === 'nostalgic' || mood === 'retro') {
+            tempo += 'at a classic game tempo around 120-130 BPM '
+        } else if (mood === 'mysterious') {
+            tempo += 'at a slow, atmospheric tempo for suspense '
+        } else {
+            tempo += 'at a medium tempo around 100-120 BPM '
+        }
+        
+        return tempo
     }
     
     private async composeBeatovenTrack(prompt: string): Promise<string | null> {
@@ -749,9 +906,12 @@ Keep responses concise but informative.`
             const startIndex = rootBoxAdapter.audioUnits.adapters().length
             console.log('🎵 Starting with', startIndex, 'existing audio units')
             
-            // Create placeholder tracks with download functionality
-            console.log('🎵 Creating placeholder tracks with download buttons...')
-            await this.createPlaceholderTracksWithDownload(startIndex, stems.stems_url)
+            // Wrap all project modifications in a single transaction
+            editing.modify(async () => {
+                // Create placeholder tracks with download functionality
+                console.log('🎵 Creating placeholder tracks with download buttons...')
+                await this.createPlaceholderTracksWithDownload(startIndex, stems.stems_url, stems.track_url)
+            }, false)
             
             // Debug: Check if tracks are now visible in the project
             const finalAudioUnits = this.project.rootBoxAdapter.audioUnits.adapters()
@@ -894,7 +1054,7 @@ private async downloadAllStems(stemsUrl: any): Promise<Record<string, Float32Arr
                 console.log(`🎵 Downloaded ${stemType} stem: ${(arrayBuffer.byteLength / 1024).toFixed(1)} KB`)
                 
                 // Convert to Float32Array (stereo)
-                const audioData = this.convertAudioBufferToFloat32Array(arrayBuffer)
+                const audioData = await this.convertArrayBufferToAudioData(arrayBuffer)
                 stemData[stemType] = audioData
                 
                 console.log(`🎵 Converted ${stemType} stem to audio data: ${audioData.length} samples`)
@@ -1049,12 +1209,10 @@ private getStemIndex(stemType: string): number {
 /**
  * Create placeholder tracks with download functionality and UI
  */
-private async createPlaceholderTracksWithDownload(startIndex: number, stemsUrl: any): Promise<void> {
-    console.log('🎵 Creating placeholder tracks with download functionality...')
-    
-    const { editing, rootBoxAdapter } = this.project
-    
-    editing.modify(() => {
+    private async createPlaceholderTracksWithDownload(startIndex: number, stemsUrl: any, fullTrackUrl?: string): Promise<void> {
+        console.log('🎵 Creating placeholder tracks with download functionality...')
+        
+        // Create tracks directly (no transaction wrapper needed since called from within a transaction)
         const stemTypes = ['bass', 'chords', 'melody', 'percussion']
         
         stemTypes.forEach((stemType, index) => {
@@ -1069,16 +1227,15 @@ private async createPlaceholderTracksWithDownload(startIndex: number, stemsUrl: 
         })
         
         console.log('🎵 Created all placeholder tracks')
-    }, false)
-    
-    // Create download UI for the user
-    await this.createDownloadUI(stemsUrl, startIndex)
-}
+        
+        // Create download UI for the user (this doesn't modify the project, so no transaction needed)
+        await this.createDownloadUI(stemsUrl, startIndex, fullTrackUrl)
+    }
 
 /**
  * Create a user-friendly download interface
  */
-private async createDownloadUI(stemsUrl: any, startIndex: number): Promise<void> {
+private async createDownloadUI(stemsUrl: any, startIndex: number, fullTrackUrl?: string): Promise<void> {
     console.log('🎵 Creating download UI for Beatoven stems...')
     
     // Create a floating download panel
@@ -1089,6 +1246,14 @@ private async createDownloadUI(stemsUrl: any, startIndex: number): Promise<void>
             <h3>🎵 Beatoven Stems Ready!</h3>
             <p>Click download to open the stem URL, then drag & drop the file onto the corresponding track to import it automatically!</p>
         </div>
+        ${fullTrackUrl ? `
+        <div class="beatoven-download-full" data-stem="full">
+            <span class="stem-name">🎼 Full Track</span>
+            <button class="download-btn" onclick="window.downloadBeatovenStem('full', '${fullTrackUrl}')">
+                📥 Download Full Track
+            </button>
+        </div>
+        ` : ''}
         <div class="beatoven-download-stems">
             <div class="stem-download-item" data-stem="bass">
                 <span class="stem-name">🎸 Bass</span>
@@ -1153,9 +1318,15 @@ private async createDownloadUI(stemsUrl: any, startIndex: number): Promise<void>
  * Set up global download function for the UI buttons
  */
 private setupGlobalDownloadFunction(startIndex: number): void {
-    // @ts-ignore - Adding to window for UI access
-    window.downloadBeatovenStem = async (stemType: string, url: string) => {
-        console.log(`🎵 Opening download URL for ${stemType} stem:`, url)
+    // Extend window with a typed property for our drag-and-drop map
+    interface BeatovenWindow extends Window {
+        downloadBeatovenStem?: (stemType: string, url: string) => Promise<void>
+        beatovenDragAndDrop?: Record<string, any>
+    }
+    const w = window as BeatovenWindow
+    
+    w.downloadBeatovenStem = async (stemType: string, url: string) => {
+        console.log(`🎵 Opening download URL for ${stemType}:`, url)
         
         try {
             // Show downloading status
@@ -1181,10 +1352,10 @@ private setupGlobalDownloadFunction(startIndex: number): void {
                     downloadBtn.onclick = () => this.showImportInstructions(stemType)
                 }
                 
-                console.log(`🎵 ${stemType} stem download URL opened successfully`)
+                console.log(`🎵 ${stemType} download URL opened successfully`)
                 
                 // Set up drag & drop detection for this stem
-                this.setupDragAndDropDetection(stemType, startIndex)
+                if (stemType !== 'full') this.setupDragAndDropDetection(stemType, startIndex)
                 
             } else {
                 throw new Error('Popup blocked by browser')
@@ -1337,13 +1508,15 @@ private setupDragAndDropDetection(stemType: string, startIndex: number): void {
  * Set up global drag and drop detection
  */
 private setupGlobalDragAndDrop(stemType: string, targetAudioUnit: any): void {
-    // @ts-ignore - Adding to window for global access
-    if (!window.beatovenDragAndDrop) {
-        window.beatovenDragAndDrop = {}
+    interface BeatovenWindow extends Window {
+        beatovenDragAndDrop?: Record<string, any>
+    }
+    const w = window as BeatovenWindow
+    if (!w.beatovenDragAndDrop) {
+        w.beatovenDragAndDrop = {}
     }
     
-    // @ts-ignore
-    window.beatovenDragAndDrop[stemType] = {
+    w.beatovenDragAndDrop[stemType] = {
         targetAudioUnit,
         stemType,
         groqService: this
@@ -1716,7 +1889,7 @@ private addDownloadPanelStyles(): void {
             const {boxGraph} = this.project
             
             // Find all effect boxes of the specified type
-            const effectBoxes = boxGraph.boxes.filter(box => {
+            const effectBoxes = boxGraph.boxes().filter((box: any) => {
                 if (effectControl.type === 'reverb') {
                     return box instanceof ReverbDeviceBox
                 } else if (effectControl.type === 'delay') {

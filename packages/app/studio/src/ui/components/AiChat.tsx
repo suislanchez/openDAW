@@ -24,6 +24,12 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
         }
     ]
     
+    // Template selection variables
+    let selectedGenre = 'pop'
+    let selectedMood = 'calm'
+    let selectedStyle = 'cinematic'
+    let inputValue = ''
+    
     const toggleChat = () => {
         isOpen = !isOpen
         updateChatVisibility()
@@ -102,6 +108,13 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
             if (bpmElement) {
                 bpmElement.textContent = currentBpm.toString()
             }
+        }
+    }
+    
+    const updateTemplatePreview = () => {
+        const previewElement = document.getElementById('template-preview-text')
+        if (previewElement) {
+            previewElement.textContent = `${selectedGenre} • ${selectedMood} • ${selectedStyle}`
         }
     }
     
@@ -185,8 +198,16 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
                 groqService = new GroqService(project)
             }
             
+            // Check if this is a template request and use selected preferences
+            let messageToProcess = userMessage
+            if (userMessage.toLowerCase().includes('template') || userMessage.toLowerCase().includes('song') || userMessage.toLowerCase().includes('track')) {
+                // Prepend the selected template preferences to the user's message
+                messageToProcess = `Create a ${selectedStyle} ${selectedMood} ${selectedGenre} template: ${userMessage}`
+                console.log('🎵 Enhanced template request:', messageToProcess)
+            }
+            
             // Process the message
-            const control = await groqService.processRequest(userMessage)
+            const control = await groqService.processRequest(messageToProcess)
             
             if (control) {
                 // Remove typing indicator and add AI response
@@ -298,12 +319,87 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
                     </div>
                 </div>
                 
+                {/* Template Selection Menu */}
+                <div className="ai-chat-template-menu" style={{display: isOpen ? 'block' : 'none'}}>
+                    <div className="template-menu-header">
+                        <h4>🎵 Create Template</h4>
+                        <p>Choose your preferences, then type your custom prompt below</p>
+                    </div>
+                    
+                    <div className="template-options">
+                        <div className="template-option-group">
+                            <label>🎨 Genre:</label>
+                            <select id="template-genre" onchange={(e) => selectedGenre = (e.target as HTMLSelectElement).value}>
+                                <option value="pop">Pop</option>
+                                <option value="electronic">Electronic</option>
+                                <option value="cinematic">Cinematic</option>
+                                <option value="ambient">Ambient</option>
+                                <option value="jazz">Jazz</option>
+                                <option value="classical">Classical</option>
+                                <option value="hip-hop">Hip-hop/Urban</option>
+                                <option value="folk">Acoustic/Folk</option>
+                                <option value="chiptune">8-bit/Chiptune</option>
+                                <option value="rock">Rock</option>
+                                <option value="world">World/Ethnic</option>
+                                <option value="blues">Blues</option>
+                            </select>
+                        </div>
+                        
+                        <div className="template-option-group">
+                            <label>🌅 Mood:</label>
+                            <select id="template-mood" onchange={(e) => selectedMood = (e.target as HTMLSelectElement).value}>
+                                <option value="calm">Calm</option>
+                                <option value="happy">Happy</option>
+                                <option value="sad">Sad</option>
+                                <option value="energetic">Energetic</option>
+                                <option value="relaxing">Relaxing</option>
+                                <option value="romantic">Romantic</option>
+                                <option value="uplifting">Uplifting</option>
+                                <option value="melancholic">Melancholic</option>
+                                <option value="motivational">Motivational</option>
+                                <option value="mysterious">Mysterious</option>
+                                <option value="nostalgic">Nostalgic</option>
+                                <option value="dramatic">Dramatic</option>
+                            </select>
+                        </div>
+                        
+                        <div className="template-option-group">
+                            <label>🎭 Style:</label>
+                            <select id="template-style" onchange={(e) => selectedStyle = (e.target as HTMLSelectElement).value}>
+                                <option value="cinematic">Cinematic</option>
+                                <option value="chill">Chill</option>
+                                <option value="ambient">Ambient</option>
+                                <option value="upbeat">Upbeat</option>
+                                <option value="lo-fi">Lo-fi</option>
+                                <option value="corporate">Corporate</option>
+                                <option value="funky">Funky</option>
+                                <option value="vintage">Vintage</option>
+                                <option value="epic">Epic</option>
+                                <option value="groovy">Groovy</option>
+                                <option value="dark">Dark</option>
+                                <option value="bright">Bright</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div className="template-preview">
+                        <span className="template-preview-label">Preview:</span>
+                        <span className="template-preview-text" id="template-preview-text">
+                            {selectedGenre} • {selectedMood} • {selectedStyle}
+                        </span>
+                    </div>
+                </div>
+                
                 <div className="ai-chat-input">
                     <input 
                         type="text" 
-                        placeholder="Ask me anything about music production..."
+                        placeholder="Type your custom template prompt here..."
                         className="ai-chat-text-input"
                         onkeypress={handleKeyPress}
+                        oninput={(e) => {
+                            inputValue = (e.target as HTMLInputElement).value
+                            updateTemplatePreview()
+                        }}
                     />
                     <button className="ai-chat-send" onclick={sendMessage}>
                         <Icon symbol={IconSymbol.Play} style={{width: '16px', height: '16px'}}/>

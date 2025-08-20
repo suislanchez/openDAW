@@ -22,6 +22,20 @@ component
       left: -4px
       width: calc(100% + 12px)
       height: calc(100% + 8px)
+    
+    &.sona-header
+      background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #f5576c, #4facfe, #00f2fe)
+      background-size: 400% 400%
+      -webkit-background-clip: text
+      -webkit-text-fill-color: transparent
+      background-clip: text
+      animation: gradientShine 3s ease-in-out infinite
+      font-weight: bold
+      text-shadow: 0 0 20px rgba(102, 126, 234, 0.5)
+      
+      &:hover
+        animation: gradientShine 1s ease-in-out infinite
+        text-shadow: 0 0 30px rgba(102, 126, 234, 0.8)
 
   > hr
     width: 1px
@@ -39,3 +53,11 @@ component
     > img
       height: 1.75rem
       border-radius: 0.25em
+
+@keyframes gradientShine
+  0%
+    background-position: 0% 50%
+  50%
+    background-position: 100% 50%
+  100%
+    background-position: 0% 50%

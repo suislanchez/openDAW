@@ -19,16 +19,12 @@ export const Dashboard = ({service}: Construct) => {
     return (
         <div className={className}>
             <article>
-                <h1>Welcome to openDAW</h1>
-                <h2>A new holistic exploration of music creation inside your browser</h2>
-                <p style={{margin: "1em 0 0 0"}}>
-                    This is an <span className="highlight">early prototype</span> giving you an early glimpse of the
-                    development
-                    state.
-                </p>
+                <h1>Welcome to Sona</h1>
+                <h2>Create ambient soundscapes, video game music, and background tracks with full DAW creativity</h2>
+
                 <div className="columns">
                     <div>
-                        <h3>Templates</h3>
+                        <h3>Music Templates</h3>
                         <div className="starters">
                             {[
                                 {name: "New", click: () => service.cleanSlate()},
@@ -55,7 +51,7 @@ export const Dashboard = ({service}: Construct) => {
                         </div>
                     </div>
                     <div>
-                        <h3>Your Projects</h3>
+                        <h3>Your Compositions</h3>
                         <ProjectBrowser service={service}
                                         select={async ([uuid, meta]) => {
                                             const handler = showProcessMonolog("Loading...")
@@ -64,14 +60,7 @@ export const Dashboard = ({service}: Construct) => {
                                         }}/>
                     </div>
                 </div>
-                <p style={{marginTop: "1.5em", fontSize: "0.625em"}}>
-                    Last built was <span style={{color: Colors.green}}>{time}</span>. Join our <a
-                    href="https://discord.opendaw.studio" target="discord" style={{color: Colors.blue}}>discord
-                    community</a> to stay updated! · <a href="https://github.com/andremichelle/opendaw"
-                                                        target="github"
-                                                        style={{color: Colors.blue}}>sourcecode</a> · <LocalLink
-                    href="/imprint">imprint</LocalLink> · Built with ❤️
-                </p>
+
             </article>
         </div>
     )
