@@ -1,6 +1,6 @@
 import {Project, InstrumentFactories, ColorCodes} from "@opendaw/studio-core"
-import {DelayDeviceBox, ReverbDeviceBox, AudioFileBox, AudioRegionBox, ValueRegionBox, ValueEventCollectionBox} from "@opendaw/studio-boxes"
-import {BoxAdapter} from "@opendaw/studio-adapters"
+import {DelayDeviceBox, ReverbDeviceBox, AudioFileBox, AudioRegionBox} from "@opendaw/studio-boxes"
+// import {BoxAdapter} from "@opendaw/studio-adapters"
 import {UUID} from "@opendaw/lib-std"
 import {PPQN} from "@opendaw/lib-dsp"
 import {SampleApi} from "./SampleApi"
@@ -173,6 +173,78 @@ Keep responses concise but informative.`
         } catch (error) {
             console.error('Error calling Groq API:', error)
             return 'Sorry, I\'m having trouble connecting right now. Please try again.'
+        }
+    }
+    
+    async streamMessage(message: string, onToken: (token: string) => void): Promise<void> {
+        if (this.apiKey === 'your-api-key-here' || !this.apiKey) {
+            console.warn('🎵 Groq API key not configured. Please set VITE_GROQ_API_KEY environment variable.')
+            onToken('⚠️ Groq API key not configured. Please set the VITE_GROQ_API_KEY environment variable in your .env file.')
+            return
+        }
+        try {
+            const response = await fetch(this.baseUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: 'llama3-8b-8192',
+                    stream: true,
+                    messages: [
+                        {
+                            role: 'system',
+                            content: `You are an AI music production assistant for openDAW. Keep responses concise but informative.`
+                        },
+                        {
+                            role: 'user',
+                            content: message
+                        }
+                    ],
+                    max_tokens: 500,
+                    temperature: 0.7
+                })
+            })
+            if (!response.ok || !response.body) throw new Error(`HTTP error! status: ${response.status}`)
+            const reader = response.body.getReader()
+            const decoder = new TextDecoder('utf-8')
+            let buffer = ''
+            while (true) {
+                const {value, done} = await reader.read()
+                if (done) break
+                buffer += decoder.decode(value, {stream: true})
+                const parts = buffer.split('\n\n')
+                buffer = parts.pop() ?? ''
+                for (const part of parts) {
+                    const line = part.trim()
+                    if (!line.startsWith('data:')) continue
+                    const data = line.slice(5).trim()
+                    if (data === '[DONE]') return
+                    try {
+                        const json = JSON.parse(data)
+                        const delta = json.choices?.[0]?.delta?.content ?? ''
+                        if (delta) onToken(delta)
+                    } catch {
+                        // ignore malformed chunks
+                    }
+                }
+            }
+            // flush remaining buffer
+            const trimmed = buffer.trim()
+            if (trimmed.startsWith('data:')) {
+                const data = trimmed.slice(5).trim()
+                if (data !== '[DONE]') {
+                    try {
+                        const json = JSON.parse(data)
+                        const delta = json.choices?.[0]?.delta?.content ?? ''
+                        if (delta) onToken(delta)
+                    } catch {}
+                }
+            }
+        } catch (error) {
+            console.error('Error streaming Groq API:', error)
+            onToken('\n\nSorry, I\'m having trouble connecting right now. Please try again.')
         }
     }
     
@@ -840,7 +912,7 @@ Keep responses concise but informative.`
                 body: JSON.stringify({
                     prompt: { text: prompt },
                     format: 'wav',
-                    looping: false
+                    looping: true
                 })
             })
             

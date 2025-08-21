@@ -3,7 +3,7 @@ import {Icon} from "./Icon.tsx"
 import {IconSymbol} from "@opendaw/studio-adapters"
 import {Lifecycle, Terminator} from "@opendaw/lib-std"
 import {Events} from "@opendaw/lib-dom"
-import {GroqService, ChatMessage, AudioEffectControl, TimelineControl, SampleControl, TemplateControl} from "@/service/GroqService"
+import {GroqService, ChatMessage} from "@/service/GroqService"
 import {StudioService} from "@/service/StudioService"
 import "./AiChat.sass"
 
@@ -16,7 +16,6 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
     const terminator = lifecycle.own(new Terminator())
     let isOpen = false
     let groqService: GroqService | null = null
-    let midiConversionService: any = null
     let messages: ChatMessage[] = [
         {
             role: 'assistant',
@@ -29,25 +28,12 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
     let selectedGenre = 'pop'
     let selectedMood = 'calm'
     let selectedStyle = 'cinematic'
-    let inputValue = ''
     
     const toggleChat = () => {
         isOpen = !isOpen
         updateChatVisibility()
         
-        // Start/stop BPM display updates
-        if (isOpen) {
-            // Update BPM display immediately
-            updateBpmDisplay()
-            
-            // Update BPM display every 2 seconds while chat is open
-            const bpmInterval = setInterval(updateBpmDisplay, 2000)
-            
-            // Store interval ID to clear it later
-            terminator.own({
-                terminate: () => clearInterval(bpmInterval)
-            })
-        }
+        // No BPM updates needed
     }
     
     const updateChatVisibility = () => {
@@ -102,77 +88,10 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
         }, 4000)
     }
     
-    const updateBpmDisplay = () => {
-        if (groqService) {
-            const currentBpm = groqService.getCurrentBpm()
-            const bpmElement = document.getElementById('current-bpm')
-            if (bpmElement) {
-                bpmElement.textContent = currentBpm.toString()
-            }
-        }
-    }
-    
     const updateTemplatePreview = () => {
         const previewElement = document.getElementById('template-preview-text')
         if (previewElement) {
             previewElement.textContent = `${selectedGenre} • ${selectedMood} • ${selectedStyle}`
-        }
-    }
-    
-    const convertAudioToMidi = async () => {
-        try {
-            // Initialize MidiConversionService if needed
-            if (!midiConversionService) {
-                const {MidiConversionService} = await import("../../service/MidiConversionService.js")
-                const project = service.project
-                midiConversionService = new MidiConversionService(project)
-            }
-            
-            // Get all convertible audio files
-            const audioFiles = midiConversionService.getConvertibleAudioFiles()
-            
-            if (audioFiles.length === 0) {
-                addMessage('assistant', '🎵 No audio files found in your project to convert to MIDI.')
-                return
-            }
-            
-            // Show conversion options
-            const fileList = audioFiles.map((file: any) => file.fileName.getValue()).join('\n• ')
-            addMessage('assistant', `🎵 Found ${audioFiles.length} audio file(s) that can be converted to MIDI:\n\n• ${fileList}\n\nClick on any audio track in your project to see the "Convert to MIDI" button, or use the conversion panel that just opened.`)
-            
-            // Open conversion panel for the first file as an example
-            if (audioFiles.length > 0) {
-                await midiConversionService.convertAudioToMidi(audioFiles[0] as any)
-            }
-            
-        } catch (error) {
-            console.error('Error converting audio to MIDI:', error)
-            addMessage('assistant', '❌ Sorry, I encountered an error while trying to convert audio to MIDI. Please try again.')
-        }
-    }
-    
-    const testBpmChange = async () => {
-        if (!groqService) {
-            const project = service.project
-            groqService = new GroqService(project)
-        }
-        
-        addMessage('user', '🧪 Testing BPM change to 140')
-        addMessage('assistant', '🤔 Testing...')
-        
-        try {
-            const currentBpm = groqService.getCurrentBpm()
-            await groqService.testBpmChange()
-            const newBpm = groqService.getCurrentBpm()
-            
-            messages.pop() // Remove testing message
-            addMessage('assistant', `🧪 Test completed! BPM changed from ${currentBpm} to ${newBpm}. Check console for details.`)
-            
-            // Update the BPM display
-            updateBpmDisplay()
-        } catch (error) {
-            messages.pop() // Remove testing message
-            addMessage('assistant', '❌ Test failed. Check console for errors.')
         }
     }
     
@@ -237,9 +156,59 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
                 // Prepend the selected template preferences to the user's message
                 messageToProcess = `Create a ${selectedStyle} ${selectedMood} ${selectedGenre} template: ${userMessage}`
                 console.log('🎵 Enhanced template request:', messageToProcess)
+                
+                // For templates, show thinking process immediately and then stream the response
+                messages.pop() // Remove typing indicator
+                const assistantIndex = messages.length
+                messages.push({ role: 'assistant', content: '', timestamp: new Date() })
+                updateMessagesDisplay()
+                
+                // Show template details immediately
+                const templateDetails = `🎵 I'll create a ${selectedStyle} ${selectedMood} ${selectedGenre} track for you!\n\n🎵 Starting composition now...`
+                
+                const messagesContainer = document.querySelector('.ai-chat-messages') as HTMLElement
+                const lastMessageEl = messagesContainer?.lastElementChild as HTMLElement | null
+                const contentEl = lastMessageEl?.querySelector('.ai-chat-content p') as HTMLElement | null
+                
+                if (contentEl) {
+                    contentEl.textContent = templateDetails
+                    messages[assistantIndex].content = templateDetails
+                }
+                
+                // Now stream the AI's response about the template
+                await groqService.streamMessage(messageToProcess, (token: string) => {
+                    const current = messages[assistantIndex]
+                    if (!current) return
+                    current.content += token
+                    if (contentEl) contentEl.textContent = current.content
+                    if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight
+                })
+                
+                // Now actually create the Beatoven template
+                try {
+                    addMessage('assistant', `🎵 Composing your ${selectedStyle} ${selectedMood} ${selectedGenre} track...`)
+                    const control = await groqService.processRequest(messageToProcess)
+                    if (control && 'type' in control && control.type === 'create_template') {
+                        addMessage('assistant', '🎵 Beatoven is working on your track! This will take a few minutes.')
+                        
+                        // Add completion message after delay
+                        setTimeout(() => {
+                            addMessage('assistant', `🎵 Your ${selectedStyle} ${selectedMood} ${selectedGenre} track is ready! Check your timeline for the new audio tracks.`)
+                        }, 10000) // 10 seconds delay
+                    }
+                } catch (error) {
+                    console.error('Error creating Beatoven template:', error)
+                    addMessage('assistant', '❌ Sorry, I encountered an error while creating the template. Please try again.')
+                }
+                
+                // Re-enable input and button
+                input.disabled = false
+                sendButton.disabled = false
+                input.focus()
+                return // Skip the regular control processing for templates
             }
             
-            // Process the message
+            // Process the message (only for non-template requests)
             const control = await groqService.processRequest(messageToProcess)
             
             if (control) {
@@ -258,13 +227,6 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
                     addMessage('assistant', `🎵 Applied ${control.type} changes: ${paramText}`)
                 } else if ('type' in control && control.type === 'add_sample') {
                     addMessage('assistant', `🎵 Added sample to your project! Check the timeline for the new audio track.`)
-                } else if ('type' in control && control.type === 'create_template') {
-                    addMessage('assistant', `🎵 Creating a full track template for you! This will take a few minutes to compose.`)
-                    
-                    // Add a follow-up message after a delay to show completion
-                    setTimeout(() => {
-                        addMessage('assistant', `🎵 Template created! Check your timeline for new tracks. You can download the audio files from the console or use the tracks as placeholders for your own recordings.`)
-                    }, 10000) // 10 seconds delay
                 }
             } else {
                 // Check if it's an API key issue
@@ -273,10 +235,21 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
                     messages.pop() // Remove typing indicator
                     addMessage('assistant', '⚠️ Groq API key not configured. Please create a `.env` file with your `VITE_GROQ_API_KEY`. Check the README for setup instructions.')
                 } else {
-                    // Regular chat response
-                    const response = await groqService.sendMessage(userMessage)
+                    // Regular chat response (streamed)
                     messages.pop() // Remove typing indicator
-                    addMessage('assistant', response)
+                    const assistantIndex = messages.length
+                    messages.push({ role: 'assistant', content: '', timestamp: new Date() })
+                    updateMessagesDisplay()
+                    const messagesContainer = document.querySelector('.ai-chat-messages') as HTMLElement
+                    const lastMessageEl = messagesContainer?.lastElementChild as HTMLElement | null
+                    const contentEl = lastMessageEl?.querySelector('.ai-chat-content p') as HTMLElement | null
+                    await groqService.streamMessage(userMessage, (token: string) => {
+                        const current = messages[assistantIndex]
+                        if (!current) return
+                        current.content += token
+                        if (contentEl) contentEl.textContent = current.content
+                        if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight
+                    })
                 }
             }
         } catch (error) {
@@ -313,7 +286,10 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
                 onclick={toggleChat}
                 title="AI Chat"
             >
-                <Icon symbol={IconSymbol.Help} style={{width: '20px', height: '20px'}}/>
+                <div className="ai-chat-toggle-icon">
+                    <Icon symbol={IconSymbol.Note} style={{width: '22px', height: '22px'}}/>
+                    <span className="ai-chat-bubble">💬</span>
+                </div>
             </button>
 
             {/* Chat Panel - Slides up from bottom when open */}
@@ -321,33 +297,16 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
                 <div className="ai-chat-header">
                     <div className="ai-chat-header-main">
                         <h3>AI Assistant</h3>
-                        <div className="ai-chat-bpm-display">
-                            🎵 BPM: <span id="current-bpm">--</span>
-                        </div>
                     </div>
-                                    <div className="ai-chat-header-controls">
-                    <button 
-                        className="ai-chat-convert-midi"
-                        onclick={() => convertAudioToMidi()}
-                        title="Convert Audio to MIDI"
-                    >
-                        🎹 Convert to MIDI
-                    </button>
-                    <button 
-                        className="ai-chat-test"
-                        onclick={() => testBpmChange()}
-                        title="Test BPM Change"
-                    >
-                        🧪 Test
-                    </button>
-                    <button 
-                        className="ai-chat-close"
-                        onclick={toggleChat}
-                        title="Close Chat"
-                    >
-                        <Icon symbol={IconSymbol.Close} style={{width: '16px', height: '16px'}}/>
-                    </button>
-                </div>
+                    <div className="ai-chat-header-controls">
+                        <button 
+                            className="ai-chat-close"
+                            onclick={toggleChat}
+                            title="Close Chat"
+                        >
+                            <Icon symbol={IconSymbol.Close} style={{width: '16px', height: '16px'}}/>
+                        </button>
+                    </div>
                 </div>
                 
                 <div className="ai-chat-messages">
@@ -436,8 +395,7 @@ export function AiChat({lifecycle, service}: AiChatParameters) {
                         placeholder="Type your custom template prompt here..."
                         className="ai-chat-text-input"
                         onkeypress={handleKeyPress}
-                        oninput={(e) => {
-                            inputValue = (e.target as HTMLInputElement).value
+                        oninput={() => {
                             updateTemplatePreview()
                         }}
                     />

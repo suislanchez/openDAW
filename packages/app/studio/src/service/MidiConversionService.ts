@@ -3,7 +3,7 @@ import {AudioFileBox, AudioRegionBox, NoteRegionBox, NoteEventCollectionBox} fro
 import {UUID} from "@opendaw/lib-std"
 import {PPQN} from "@opendaw/lib-dsp"
 import {SampleApi} from "@/service/SampleApi"
-import { outputToNotesPoly } from "@spotify/basic-pitch"
+import { BasicPitch, outputToNotesPoly } from "@spotify/basic-pitch"
 
 export interface ConversionResult {
     success: boolean
@@ -101,15 +101,26 @@ export class MidiConversionService {
             const abuf = await blob.arrayBuffer()
             const audioBuffer = await ac.decodeAudioData(abuf)
 
-            // For now, create a simple placeholder since BasicPitch is complex
-            // In a real implementation, you'd use the full BasicPitch API
-            const midiJson = { 
-                notes: [
-                    { midi: 60, start: 0, end: 0.5, velocity: 0.8 },
-                    { midi: 64, start: 0.5, end: 1.0, velocity: 0.8 },
-                    { midi: 67, start: 1.0, end: 1.5, velocity: 0.8 }
-                ]
-            }
+            // Use BasicPitch with the included model
+            const modelPath = '/node_modules/@spotify/basic-pitch/model/model.json'
+            const basicPitch = new BasicPitch(modelPath)
+            
+            const frames: number[][] = []
+            const onsets: number[][] = []
+            const contours: number[][] = []
+            
+            await basicPitch.evaluateModel(audioBuffer, 
+                (frame, onset, contour) => {
+                    frames.push(...frame)
+                    onsets.push(...onset)
+                    contours.push(...contour)
+                },
+                (progress) => console.log('🎵 Conversion progress:', Math.round(progress * 100) + '%')
+            )
+            
+            // Convert the raw output to notes using the utility function
+            const notes = outputToNotesPoly(frames, onsets, contours)
+            const midiJson = { notes }
             console.log('🎵 basicPitch JSON:', midiJson)
 
             // Try to emit a MIDI file
@@ -224,15 +235,26 @@ export class MidiConversionService {
             const audioBuffer = await this.decodeFileToAudioBuffer(audioFile)
             
             // Use BasicPitch class for conversion
-            // For now, create a simple placeholder since BasicPitch is complex
-            // In a real implementation, you'd use the full BasicPitch API
-            const midiJson = { 
-                notes: [
-                    { midi: 60, start: 0, end: 0.5, velocity: 0.8 },
-                    { midi: 64, start: 0.5, end: 1.0, velocity: 0.8 },
-                    { midi: 67, start: 1.0, end: 1.5, velocity: 0.8 }
-                ]
-            }
+            // Use BasicPitch with the included model
+            const modelPath = '/node_modules/@spotify/basic-pitch/model/model.json'
+            const basicPitch = new BasicPitch(modelPath)
+            
+            const frames: number[][] = []
+            const onsets: number[][] = []
+            const contours: number[][] = []
+            
+            await basicPitch.evaluateModel(audioBuffer, 
+                (frame, onset, contour) => {
+                    frames.push(...frame)
+                    onsets.push(...onset)
+                    contours.push(...contour)
+                },
+                (progress) => console.log('🎵 Conversion progress:', Math.round(progress * 100) + '%')
+            )
+            
+            // Convert the raw output to notes using the utility function
+            const notes = outputToNotesPoly(frames, onsets, contours)
+            const midiJson = { notes }
             console.log('🎵 basicPitch JSON:', midiJson)
 
             // Try to emit a MIDI file
