@@ -41,6 +41,8 @@ export class GroqService {
     private readonly beatovenApiKey: string
     private readonly beatovenBaseUrl = 'https://public-api.beatoven.ai'
     private lastUserMessage: string = ''
+    private storedStems: any = null // Store the latest stems data
+    private requestedStemType: string | null = null // Store the requested stem type for filtering
     
     constructor(private project: Project) {
         // Get API key from environment variable or use a placeholder
@@ -195,7 +197,7 @@ Keep responses concise but informative.`
                     messages: [
                         {
                             role: 'system',
-                            content: `You are an AI music production assistant for openDAW. Keep responses concise but informative.`
+                            content: `You are an AI music production assistant for openDAW. When helping with music creation, focus on the mood, atmosphere, and what the track would be good for. Keep responses concise and avoid overly specific technical details. Instead, describe the emotional feel and potential uses of the music.`
                         },
                         {
                             role: 'user',
@@ -618,11 +620,13 @@ Keep responses concise but informative.`
         }
     }
     
-    private parseTemplatePreferences(userMessage: string): {
+    private parseTemplatePreferences(userMessage: string, customLength?: string, customLooping?: boolean): {
         style: string
         mood: string
         duration: string
         genre: string
+        length: string
+        looping: boolean
     } {
         const lowerMessage = userMessage.toLowerCase()
         
@@ -668,18 +672,20 @@ Keep responses concise but informative.`
             mood = 'mysterious'
         }
         
-        // Determine duration based on user's actual request
-        let duration = '60 seconds' // Default to 1 minute instead of 30 seconds
-        if (lowerMessage.includes('short') || lowerMessage.includes('quick') || lowerMessage.includes('brief')) {
-            duration = '30 seconds'
-        } else if (lowerMessage.includes('very short') || lowerMessage.includes('tiny')) {
-            duration = '15 seconds'
-        } else if (lowerMessage.includes('long') || lowerMessage.includes('extended') || lowerMessage.includes('full')) {
-            duration = '120 seconds'
-        } else if (lowerMessage.includes('2 minute') || lowerMessage.includes('120 seconds')) {
-            duration = '120 seconds'
-        } else if (lowerMessage.includes('5 minute') || lowerMessage.includes('300 seconds')) {
-            duration = '300 seconds'
+        // Use custom length if provided, otherwise determine from user message
+        let duration = customLength ? `${customLength} seconds` : '60 seconds'
+        if (!customLength) {
+            if (lowerMessage.includes('short') || lowerMessage.includes('quick') || lowerMessage.includes('brief')) {
+                duration = '30 seconds'
+            } else if (lowerMessage.includes('very short') || lowerMessage.includes('tiny')) {
+                duration = '15 seconds'
+            } else if (lowerMessage.includes('long') || lowerMessage.includes('extended') || lowerMessage.includes('full')) {
+                duration = '120 seconds'
+            } else if (lowerMessage.includes('2 minute') || lowerMessage.includes('120 seconds')) {
+                duration = '120 seconds'
+            } else if (lowerMessage.includes('5 minute') || lowerMessage.includes('300 seconds')) {
+                duration = '300 seconds'
+            }
         }
         
         // Determine genre based on user's actual request
@@ -710,8 +716,8 @@ Keep responses concise but informative.`
             genre = 'blues'
         }
         
-        console.log('🎵 Parsed template preferences from user request:', { style, mood, duration, genre })
-        return { style, mood, duration, genre }
+        console.log('🎵 Parsed template preferences from user request:', { style, mood, duration, genre, length: customLength, looping: customLooping })
+        return { style, mood, duration, genre, length: customLength || '60', looping: customLooping !== undefined ? customLooping : true }
     }
     
     private async applyTemplateControl(templateControl: TemplateControl): Promise<void> {
@@ -736,6 +742,11 @@ Keep responses concise but informative.`
                 console.warn('🎵 Beatoven API key not configured. Please set VITE_BEATOVEN_API_KEY environment variable.')
                 return
             }
+            
+            // Detect if user is requesting a specific stem type
+            const userMessage = this.lastUserMessage || ''
+            const requestedStemType = this.detectStemType(userMessage)
+            console.log('🎵 Detected requested stem type:', requestedStemType)
             
             // Create the prompt for Beatoven
             const prompt = this.createBeatovenPrompt(preferences)
@@ -762,6 +773,9 @@ Keep responses concise but informative.`
             // Add stems to the project
             await this.addBeatovenStemsToProject(stems)
             
+            // Store the requested stem type for download filtering
+            this.requestedStemType = requestedStemType
+            
         } catch (error) {
             console.error('🎵 Error creating Beatoven template:', error)
         }
@@ -769,46 +783,43 @@ Keep responses concise but informative.`
     
     private createBeatovenPrompt(preferences: any): string {
         const userMessage = this.lastUserMessage || ''
-        const { style, mood, duration, genre } = preferences
+        const { length, looping } = preferences
         
-        // Start building a comprehensive Beatoven prompt
-        let enhancedPrompt = ''
+        // Use the user's exact message, just add length and looping settings
+        let prompt = userMessage.trim()
         
-        // 1. Duration (always specified)
-        enhancedPrompt += `${duration} `
-        
-        // 2. Mood/Atmosphere (always specified)
-        enhancedPrompt += `${mood} `
-        
-        // 3. Genre/Style (always specified)
-        enhancedPrompt += `${genre} `
-        
-        // 4. Core user request (cleaned up)
-        let coreRequest = userMessage
-            .replace(/make|create|template|song|track|for|a|an|please|can you|would you/g, '')
-            .trim()
-        
-        enhancedPrompt += `${coreRequest} `
-        
-        // 5. Add "track" if not specified
-        if (!enhancedPrompt.includes('track') && !enhancedPrompt.includes('song') && !enhancedPrompt.includes('music')) {
-            enhancedPrompt += 'track '
+        // Add length and looping info if not already specified
+        if (!prompt.toLowerCase().includes('second') && !prompt.toLowerCase().includes('minute')) {
+            const lengthText = length === '30' ? '30 seconds' : 
+                              length === '60' ? '1 minute' : 
+                              length === '120' ? '2 minutes' : '5 minutes'
+            prompt = `${lengthText} ${prompt}`
         }
         
-        // 6. Add specific instruments based on genre and style
-        enhancedPrompt += this.getInstrumentSuggestions(genre, style)
+        if (!prompt.toLowerCase().includes('loop')) {
+            const loopText = looping ? 'with looping' : 'without looping'
+            prompt = `${prompt} ${loopText}`
+        }
         
-        // 7. Add structural ideas based on style
-        enhancedPrompt += this.getStructuralSuggestions(style, mood)
+        console.log('🎵 Beatoven prompt (using exact user message):', prompt)
+        return prompt
+    }
+    
+    // Detect if the user is requesting a specific stem type
+    private detectStemType(userMessage: string): string | null {
+        const message = userMessage.toLowerCase()
         
-        // 8. Add tempo suggestions based on mood and style
-        enhancedPrompt += this.getTempoSuggestions(mood, style)
+        if (message.includes('melody') || message.includes('lead') || message.includes('tune') || message.includes('melodic')) {
+            return 'melody'
+        } else if (message.includes('drums') || message.includes('drum') || message.includes('percussion') || message.includes('beat') || message.includes('rhythm')) {
+            return 'percussion'
+        } else if (message.includes('chords') || message.includes('chord') || message.includes('harmony') || message.includes('piano') || message.includes('keyboard')) {
+            return 'chords'
+        } else if (message.includes('bass') || message.includes('bassline') || message.includes('low end') || message.includes('bassline')) {
+            return 'bass'
+        }
         
-        // Clean up and format the final prompt
-        enhancedPrompt = enhancedPrompt.replace(/\s+/g, ' ').trim()
-        
-        console.log('🎵 Comprehensive Beatoven prompt created:', enhancedPrompt)
-        return enhancedPrompt
+        return null
     }
     
     private getInstrumentSuggestions(genre: string, style: string): string {
@@ -950,6 +961,8 @@ Keep responses concise but informative.`
                 console.log('🎵 Beatoven status check:', data.status)
                 
                 if (data.status === 'composed') {
+                    console.log('🎵 Beatoven composition completed, full response:', JSON.stringify(data, null, 2))
+                    console.log('🎵 Returning meta data:', JSON.stringify(data.meta, null, 2))
                     return data.meta
                 } else if (data.status === 'failed') {
                     throw new Error('Beatoven composition failed')
@@ -980,9 +993,9 @@ Keep responses concise but informative.`
             
             // Wrap all project modifications in a single transaction
             editing.modify(async () => {
-                // Create placeholder tracks with download functionality
-                console.log('🎵 Creating placeholder tracks with download buttons...')
-                await this.createPlaceholderTracksWithDownload(startIndex, stems.stems_url, stems.track_url)
+                // Create placeholder tracks (no download UI)
+                console.log('🎵 Creating placeholder tracks...')
+                await this.createPlaceholderTracks(startIndex)
             }, false)
             
             // Debug: Check if tracks are now visible in the project
@@ -1057,45 +1070,45 @@ Keep responses concise but informative.`
                     console.log('🎵 Error triggering change notifications:', notifyError)
                 }
                 
-                            // Try one more approach - access UI components directly
-            console.log('🎵 Attempting to access UI components directly...')
-            try {
-                // Look for timeline or tracks components in the DOM
-                const timelineElements = document.querySelectorAll('[class*="timeline"], [class*="track"], [class*="audio-unit"]')
-                console.log('🎵 Found timeline/track elements:', timelineElements.length)
-                
-                // Try to trigger a resize event which might refresh the UI
-                if (timelineElements.length > 0) {
-                    timelineElements.forEach((element, index) => {
-                        if (index < 3) { // Only log first 3 to avoid spam
-                            console.log('🎵 Timeline element', index, ':', element.className)
-                        }
-                    })
+                // Try one more approach - access UI components directly
+                console.log('🎵 Attempting to access UI components directly...')
+                try {
+                    // Look for timeline or tracks components in the DOM
+                    const timelineElements = document.querySelectorAll('[class*="timeline"], [class*="track"], [class*="audio-unit"]')
+                    console.log('🎵 Found timeline/track elements:', timelineElements.length)
                     
-                    // Trigger a window resize event which might refresh the UI
-                    window.dispatchEvent(new Event('resize'))
-                    console.log('🎵 Window resize event dispatched')
+                    // Try to trigger a resize event which might refresh the UI
+                    if (timelineElements.length > 0) {
+                        timelineElements.forEach((element, index) => {
+                            if (index < 3) { // Only log first 3 to avoid spam
+                                console.log('🎵 Timeline element', index, ':', element.className)
+                            }
+                        })
+                        
+                        // Trigger a window resize event which might refresh the UI
+                        window.dispatchEvent(new Event('resize'))
+                        console.log('🎵 Window resize event dispatched')
+                    }
+                    
+                } catch (uiError) {
+                    console.log('🎵 Error accessing UI components:', uiError)
                 }
                 
-            } catch (uiError) {
-                console.log('🎵 Error accessing UI components:', uiError)
+            } catch (error) {
+                console.log('🎵 Error forcing UI refresh:', error)
             }
             
+            // Store the stems data for downloading
+            this.storedStems = stems
+            console.log('🎵 Stored stems data structure for downloading:', JSON.stringify(stems, null, 2))
+            
+            // Show success message in console
+            console.log('🎵 Beatoven stems added as placeholder tracks!')
+            
         } catch (error) {
-            console.log('🎵 Error forcing UI refresh:', error)
+            console.error('🎵 Error adding Beatoven stems to project:', error)
         }
-        
-        // Show success message
-        console.log('🎵 Beatoven stems added as placeholder tracks! You can now:')
-        console.log('🎵 1. Use the download panel to get your audio stems')
-        console.log('🎵 2. Click download to open the stem URL (bypasses CORS)')
-        console.log('🎵 3. Download the file manually, then drag & drop onto the track')
-        console.log('🎵 4. The file will be automatically imported into your project!')
-        
-    } catch (error) {
-        console.error('🎵 Error adding Beatoven stems to project:', error)
     }
-}
 
 /**
  * Download all Beatoven stems and convert them to audio data
@@ -1281,8 +1294,8 @@ private getStemIndex(stemType: string): number {
 /**
  * Create placeholder tracks with download functionality and UI
  */
-    private async createPlaceholderTracksWithDownload(startIndex: number, stemsUrl: any, fullTrackUrl?: string): Promise<void> {
-        console.log('🎵 Creating placeholder tracks with download functionality...')
+    private async createPlaceholderTracks(startIndex: number): Promise<void> {
+        console.log('🎵 Creating placeholder tracks...')
         
         // Create tracks directly (no transaction wrapper needed since called from within a transaction)
         const stemTypes = ['bass', 'chords', 'melody', 'percussion']
@@ -1299,9 +1312,6 @@ private getStemIndex(stemType: string): number {
         })
         
         console.log('🎵 Created all placeholder tracks')
-        
-        // Create download UI for the user (this doesn't modify the project, so no transaction needed)
-        await this.createDownloadUI(stemsUrl, startIndex, fullTrackUrl)
     }
 
 /**
@@ -2127,6 +2137,16 @@ private addDownloadPanelStyles(): void {
             console.error('🎵 Error getting current BPM:', error)
             return 0
         }
+    }
+    
+    // Get stored Beatoven stems data for downloading
+    getStoredStems(): any {
+        return this.storedStems
+    }
+    
+    // Get the requested stem type for filtering downloads
+    getRequestedStemType(): string | null {
+        return this.requestedStemType
     }
 }
                                         

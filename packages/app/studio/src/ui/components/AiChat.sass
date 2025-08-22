@@ -455,3 +455,211 @@
     font-size: 14px
     font-weight: 500
     line-height: 1.4
+
+// AI Assistant Suggestions
+.ai-chat-suggestions
+    margin: 20px 0
+    padding: 0 4px
+    
+    h4
+        margin: 0 0 16px 0
+        font-size: 16px
+        font-weight: 600
+        color: #0f172a
+        text-align: center
+        opacity: 0.9
+
+.ai-chat-suggestion-grid
+    display: grid
+    grid-template-columns: 1fr 1fr
+    gap: 12px
+    margin-bottom: 16px
+
+.ai-chat-suggestion-btn
+    background: rgba(255, 255, 255, 0.4)
+    backdrop-filter: blur(12px)
+    -webkit-backdrop-filter: blur(12px)
+    border: 1px solid rgba(255, 255, 255, 0.3)
+    border-radius: 12px
+    padding: 16px 12px
+    cursor: pointer
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)
+    display: flex
+    flex-direction: column
+    align-items: center
+    gap: 8px
+    min-height: 80px
+    justify-content: center
+    
+    &:hover
+        background: rgba(255, 255, 255, 0.6)
+        border-color: rgba(255, 255, 255, 0.5)
+        transform: translateY(-2px)
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15)
+    
+    &:active
+        transform: translateY(0)
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1)
+    
+    .suggestion-icon
+        font-size: 24px
+        line-height: 1
+    
+    .suggestion-text
+        font-size: 12px
+        font-weight: 500
+        color: #0f172a
+        text-align: center
+        line-height: 1.2
+        max-width: 100%
+        word-wrap: break-word
+
+// Responsive adjustments for suggestions
+@media (max-width: 480px)
+    .ai-chat-suggestion-grid
+        grid-template-columns: 1fr
+        gap: 10px
+    
+    .ai-chat-suggestion-btn
+        min-height: 70px
+        padding: 14px 10px
+        
+        .suggestion-icon
+            font-size: 20px
+        
+        .suggestion-text
+            font-size: 11px
+
+// Responsive adjustments for download buttons
+@media (max-width: 480px)
+    .ai-chat-stems-grid
+        grid-template-columns: 1fr
+        gap: 10px
+        max-width: 100%
+    
+    .ai-chat-stems-single
+        max-width: 100%
+    
+    .ai-chat-download-btn
+        min-width: 100%
+        padding: 10px 16px
+        
+        span
+            font-size: 13px
+
+// AI Chat Download Message
+.ai-chat-download-message
+    margin-top: 16px
+    
+    .ai-chat-content
+        background: rgba(34, 197, 94, 0.1)
+        border: 1px solid rgba(34, 197, 94, 0.3)
+        border-radius: 18px
+        padding: 16px
+        
+        p
+            margin: 0 0 12px 0
+            color: #0f172a
+            font-weight: 500
+            
+            &:last-child
+                margin-bottom: 0
+                font-size: 13px
+                opacity: 0.8
+                font-weight: 400
+
+.ai-chat-download-buttons
+    display: flex
+    flex-direction: column
+    gap: 16px
+    margin: 16px 0
+    align-items: center
+
+.ai-chat-stems-grid
+    display: grid
+    grid-template-columns: 1fr 1fr
+    gap: 12px
+    width: 100%
+    max-width: 400px
+
+.ai-chat-stems-single
+    display: flex
+    justify-content: center
+    width: 100%
+    max-width: 400px
+
+.ai-chat-download-btn
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%)
+    color: white
+    border: none
+    padding: 12px 24px
+    border-radius: 24px
+    cursor: pointer
+    font-size: 14px
+    font-weight: 600
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)
+    display: flex
+    align-items: center
+    gap: 8px
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3)
+    min-width: 200px
+    justify-content: center
+    
+    &:hover
+        transform: translateY(-2px)
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4)
+    
+    &:active
+        transform: translateY(0)
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3)
+    
+    span
+        font-size: 14px
+        font-weight: 600
+
+// Specific styling for different download button types
+.ai-chat-download-percussion
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%)
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3)
+    
+    &:hover
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4)
+
+.ai-chat-download-melody
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3)
+    
+    &:hover
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4)
+
+.ai-chat-download-bass
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%)
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3)
+    
+    &:hover
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4)
+
+.ai-chat-download-chords
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3)
+    
+    &:hover
+        box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4)
+
+.ai-chat-download-track
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%)
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3)
+    
+    &:hover
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4)
+
+.ai-chat-download-debug
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%)
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3)
+    
+    &:hover
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4)
+
+.ai-chat-download-note
+    font-style: italic
+    color: #64748b
