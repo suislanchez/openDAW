@@ -1,195 +1,101 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andremichelle/openDAW/refs/heads/main/packages/app/studio/public/favicon.svg" height="120"/>
-  <h1 align="center">openDAW</h1>
+  <!-- Replace with your own logo -->
+  <img src="https://raw.githubusercontent.com/andremichelle/openDAW/refs/heads/main/packages/app/studio/public/favicon.svg" height="120" />
+  <h1 align="center">Sona</h1>
+  <h3 align="center">An AI-first web Digital Audio Workstation — a fork of <a href="https://github.com/andremichelle/openDAW">openDAW</a></h3>
 </p>
 
 <p align="center">
-<a href="https://www.gnu.org/licenses/gpl-3.0.html" rel="nofollow"><img src="https://img.shields.io/badge/license-GPLv3-blue.svg" alt="License: GPLv3"></a>
-<a href="https://discord.gg/ZRm8du7vn4" rel="nofollow"><img src="https://img.shields.io/discord/1241019312328675399?label=Discord&logo=discord&logoColor=white" alt="discord server"></a>
-<a href="https://github.com/andremichelle/opendaw" rel="nofollow"><img src="https://img.shields.io/github/stars/andremichelle/opendaw" alt="stars"></a>
+  <a href="https://www.gnu.org/licenses/gpl-3.0.html" rel="nofollow"><img src="https://img.shields.io/badge/license-GPLv3-blue.svg" alt="License: GPLv3"></a>
 </p>
 
-**openDAW** is a next-generation web-based Digital Audio Workstation (DAW) designed to **democratize** music production
-and to **resurface the process of making music** by making **high-quality** creation tools accessible to everyone, with
-a strong focus on **education** and data-privacy. Please consider supporting this project on [Patreon](https://www.patreon.com/join/openDAW) or [ko-fi](https://ko-fi.com/opendaw).
+**Sona** is a privacy-first, browser-based **Digital Audio Workstation (DAW)** with **AI built in**.  
+It’s a fork of the outstanding [openDAW](https://github.com/andremichelle/openDAW) project, extended with:
 
-<p align="center">
-<img src="https://raw.githubusercontent.com/andremichelle/openDAW/refs/heads/main/assets/studio-teaser.png"/>
-</p>
+- **AI music generation** (describe a vibe → get clips/tracks/instruments).
+- **Chat-to-mix**: ask in plain English to change **reverb, delay, EQ**, **tempo/speed**, and more.
+- **Smart timing**: set **time signatures** (e.g., 4/4) and **quantize** to **1/2, 1/4, 1/8...**—just by asking.
+- **Education-friendly onboarding**: contextual tips and explainers for every action.
 
----
-
-## Open-Source
-
-We are committed to transparency and community-driven development. 
-
-The source code for openDAW is available under GPL3 (links below).
-
-### Built on Trust and Transparency
-
-**openDAW stands for radical simplicity and respect.**
-
-- **No SignUp**
-- **No Tracking**
-- **No Cookie Banners**
-- **No User Profiling**
-- **No Terms & Conditions**
-- **No Ads**
-- **No Paywalls**
-- **No Data Mining**
+No sign-ups. No tracking. No ads. Just music.
 
 ---
 
-## Huge Shoutout To The Incredible openDAW Community!
+## Talk to Your DAW (Examples)
 
-To everyone who has contributed feedback, reported bugs, suggested improvements, or helped spread the word — thank you!
-Your support is shaping openDAW into something truly powerful!
+> Type these into Sona’s AI panel (or say them, if voice is enabled):
 
-Thank
-you [@ccswdavidson](https://github.com/ccswdavidson), [@Chaosmeister](https://github.com/Chaosmeister), [@jeffreylouden](https://github.com/jeffreylouden), [@solsos](https://github.com/solsos), [@TheRealSyler](https://github.com/TheRealSyler), [@Trinitou](https://github.com/Trinitou),
-and [@xnstad](https://github.com/xnstad) for testing the repositories and identifying issues during the installation of
-openDAW!
-
-Special shout-out to the biggest bug hunters: [kanaris](https://kanaris.net/)
-and [BeatMax Prediction](https://linktr.ee/beatmax_prediction). Your relentless attention to detail made a huge
-difference!
-
-Huge thanks to our [ambassadors](https://opendaw.org/ambassadors), whose dedication and outreach amplify our mission!
-
-## And big hugs to all our supporters!
-
-### openDAW Visionary — $25.00  
-- Polarity
-- kanaris  
-- Stephen Tai  
-- Thad Guidry  
-- Pathfinder  
-- One Sound Every Day (santino)
-
-### openDAW Supporter — $5.00  
-- Cal Lycus  
-- Jetdarc  
-- Truls Enstad  
-- p07a  
-- Ynot Etluhcs  
-- Mats Gisselson  
-- Dado  
-- centomila  
-- Ola  
-- SKYENCE  
-- BeatMax_Prediction  
-- Kim T  
-- Nyenoidz  
-- Bruce Hunter  
-- Steve Meiers  
-- 4ohm  
-- Yito  
-- Shawn Lukas  
-- Tommes  
-- David Thompson  
-- Harry Gillich
-- OxVolt
-- Wojciech Miłkowski
-- Client
-- skyboundzoo
-
-### openDAW Custom Pledge
-- lokomotywa ($2.47)
+- “Make a **dreamy lo-fi** beat at **82 BPM**, vinyl hiss, soft keys.”
+- “Set **time signature to 4/4** and **quantize** the drum clip to **1/8**.”
+- “On **Vocals**, add a **plate reverb**: **35% wet**, **1.6s** decay.”
+- “Give the snare a **dotted 1/8 delay**, low feedback.”
+- “**EQ** the vocals: **HPF at 90Hz**, **-2 dB at 3 kHz**, **Q 1.2**.”
+- “**Speed up** the whole song by **3%**.”
+- “Tighten the **bass** timing: **quantize 1/4**, light strength.”
+- “Make the chorus feel **wider and brighter**; keep verse warm.”
+- “Turn this loop into **UK garage** at **132 BPM** with swung hats.”
+- “Render a **30-second preview** starting at bar 17.”
 
 ---
 
-### Repositories
+## Why Sona
 
-* [openDAW](https://github.com/andremichelle/opendaw)
+- **AI where it helps**: creation, mixing, and arrangement—without hiding the “how.”
+- **Radically simple**: minimal UI, powerful under the hood.
+- **Privacy by default**: local-first workflows wherever possible.
 
-### Prepare, Clone, Installation, and Run
+---
 
-openDAW tries to avoid external libraries and frameworks. Following is a list of the external libraries we currently use in the web studio:
+## Open Source & Credits
 
-* [jszip](https://www.npmjs.com/package/jszip) (for openDAW project bundle file)
-* [markdown-it](https://www.npmjs.com/package/markdown-it) + [markdown-it-table](https://www.npmjs.com/package/markdown-it-table) (for help pages)
-* [d3-force](https://d3js.org/d3-force) (for graph debugging)
+Sona is a **fork of [openDAW](https://github.com/andremichelle/openDAW)** by André Michelle (GPLv3).  
+Huge respect to the original project and its philosophy of transparency and simplicity. This fork focuses on AI features and removes sections not applicable to this repo (community patrons, ambassador rosters, etc.).
 
-Before starting, ensure you have the following installed on your system:
+---
 
-- [Git](https://git-scm.com/) is required for cloning the repository and managing submodules.
-- [mkcert](https://github.com/FiloSottile/mkcert#installation) is required to create a certificate for developing with
-  https protocol.
-- [Node.js](nodejs.org) version **>= 23**. This is necessary for running the development server and installing
-  dependencies.
-- [Sass](https://sass-lang.com/) While Sass is handled internally during the development process, you will need to
-  ensure you have the
-  binaries available in your environment if used outside the build system.
+## Tech & External Libraries
+
+Sona inherits openDAW’s “avoid framework sprawl” approach. Current studio deps:
+
+- [jszip](https://www.npmjs.com/package/jszip) — project bundle files  
+- [markdown-it](https://www.npmjs.com/package/markdown-it) + [markdown-it-table](https://www.npmjs.com/package/markdown-it-table) — help pages  
+- [d3-force](https://d3js.org/d3-force) — graph debugging
+
+**Requirements**
+
+- [Git](https://git-scm.com/)
+- [mkcert](https://github.com/FiloSottile/mkcert#installation) — local HTTPS certs
+- [Node.js](https://nodejs.org) **>= 23**
+- [Sass](https://sass-lang.com/) (CLI/binaries available in env)
 - [TypeScript](https://www.typescriptlang.org/)
-- [OpenSSL](https://openssl-library.org/) For generating local development certificates (), OpenSSL needs to be installed on
-  your system. Most Linux/macOS systems have OpenSSL pre-installed.
-
-### Clone
-
-`git clone https://github.com/andremichelle/opendaw.git && cd opendaw`
-
-### Installation
-
-* `npm run cert` (only for the very first time)
-* `npm run clean` (to revert to clean slate, removes all `node_modules` and `dist` folders)
-* `npm install` (for the first time and after `npm run clean`)
-* `npm run build` (for the first time and after `npm run clean`)
-* `npm run dev:studio` | `npm run dev:headless` (start dev server)
-* Navigate to https://localhost:8080 (port is important > cors sample api)
-
-### Flow Charts
-
-<img width="6551" height="5971" alt="image" src="https://github.com/user-attachments/assets/09aaf742-6175-42ba-946b-a66e5f5dac72" />
+- [OpenSSL](https://www.openssl.org/) (for cert tooling; usually preinstalled on macOS/Linux)
 
 ---
 
-[![Custom Caption: Watch the Demo](https://img.youtube.com/vi/VPTXeJY6Eaw/0.jpg)](https://www.youtube.com/watch?v=VPTXeJY6Eaw)
+## Install & Run
 
-Watch Polarity's Video *"there's a new FREE DAW in town"*
+> Replace `your-username/sona` with your repo path.
 
-## Get Involved
+```bash
+git clone https://github.com/your-username/sona.git
+cd sona
 
-We welcome contributions from developers, musicians, educators, and enthusiasts. To learn more about how you can
-participate, visit our [Contribute](https://opendaw.org/contribute) page.
+# First time only
+npm run cert
 
-### What We Are Looking For:
+# Optional: revert to clean slate
+npm run clean
 
-1. **Offline desktop build (e.g., via Tauri) or a standalone installable PWA** — offer offline capability.
-2. **Cloud-agnostic project storage** — a facade layer that lets users plug in different cloud services (e.g., Drive,
-   S3, Dropbox) for projects and sample libraries.
-3. **Live remote collaboration** — real-time session sharing and sync so multiple users can edit the same project
-   concurrently.
-4. **AI manual assistant** — an embedded agent that answers context-aware questions and guides users through features as
-   they work.
-5. **AI-powered stem splitting** — integrated source-separation to extract vocals, drums, and other stems directly
-   inside the DAW.
-6. **Import and Export** - Contribute every possible file format IO
+# Install deps
+npm install
 
-## Links
+# Build
+npm run build
 
-* [opendaw.studio (prototype)](https://opendaw.studio)
-* [opendaw.org (website)](https://opendaw.org)
-* [openDAW on Discord](https://discord.opendaw.studio)
-* [openDAW SDK](https://www.npmjs.com/org/opendaw)
-* [openDAW on Patreon](https://www.patreon.com/join/openDAW)
-* [openDAW on ko-fi](https://ko-fi.com/opendaw)
-* [LinkedIn](https://www.linkedin.com/company/opendaw-org/)
-* [Instagram](https://www.instagram.com/opendaw.studio)
+# Dev servers
+npm run dev:studio     # Studio UI
+# or
+npm run dev:headless   # Headless mode
 
-## Dual-Licensing Model
-
-openDAW is available **under two alternative license terms**:
-
-| Option                    | When to choose it                                                                                              | Obligations                                                                                                                                                                      |
-|---------------------------|----------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **A. GPL v3 (or later)**  | You are happy for the entire work that includes openDAW to be released under GPL-compatible open-source terms. | – Must distribute complete corresponding source code under GPL.<br>– Must keep copyright & licence notices.<br>– May run openDAW privately in any software, open or closed (§0). |
-| **B. Commercial Licence** | You wish to incorporate openDAW into **closed-source** or otherwise licence-incompatible software.             | – Pay the agreed fee.<br>– No copyleft requirement for your own source code.<br>– Other terms as per the signed agreement.                                                       |
-
-> **How to obtain the Commercial License**  
-> Email `andre.michelle@opendaw.org` with your company name, product description, and expected distribution volume.
-
-If you redistribute openDAW or a derivative work **without** a commercial license, the GPL v3 terms apply automatically.
-
-## License
-
-[GPL v3](https://www.gnu.org/licenses/gpl-3.0.txt) © 2025 André Michelle
+# Open the studio (note the port for CORS samples)
+# https://localhost:8080
